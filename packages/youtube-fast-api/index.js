@@ -1,12 +1,19 @@
 const { getAllComments, getPaginatedComments, getNextCommentsPage } = require("./controllers/commentsController")
 
-if (process.env.NODE_ENV != "production") {
-    require('dotenv').config()
+function youtubeClient(apiKey) {
+    this.apiKey = apiKey;
 }
 
-let apiKey = process.env.YOUTUBE_API_KEY;
-let videoId = "UIENaGNL6es";
+youtubeClient.prototype.getAllComments = function (videoId) {
+    return getAllComments(this.apiKey, videoId)
+}
 
-exports.getAllComments = getAllComments;
-exports.getPaginatedComments = getPaginatedComments;
-exports.getNextCommentsPage = getNextCommentsPage;
+youtubeClient.prototype.getPaginatedComments = function (videoId, paginatedSize) {
+    return getPaginatedComments(this.apiKey, videoId, paginatedSize)
+}
+
+youtubeClient.prototype.getNextCommentsPage = function (videoId, token, paginatedSize) {
+    return getNextCommentsPage(this.apiKey, videoId, token, paginatedSize)
+}
+
+module.exports = youtubeClient;
