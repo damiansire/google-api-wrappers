@@ -1,3 +1,10 @@
+Primero, debes de usar el cliente de la API, para eso haces:
+
+const youtubeClient = require("youtube-fast-api")
+
+ytClient = new youtubeClient();
+
+
 ### Funcion getAllComments 
 Dado el ID de un video, esta funcion te devuelve todos los comentarios que hay en el.
 
