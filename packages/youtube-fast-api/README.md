@@ -41,7 +41,7 @@ Hecho esto, ya tienes acceso al cliente de la **API**.
 
 # Funcionalidades
 
-### Funcion getAllComments 
+## Funcion getAllComments 
 
 
 ```
@@ -50,7 +50,7 @@ getAllComments( videoId )
 
 Dado el ID de un video, esta funcion te devuelve todos los comentarios que hay en el.
 
-### Función getPaginatedComments 
+## Función getPaginatedComments 
 
 ```
 getPaginatedComments( videoId, paginatedSize )
@@ -64,7 +64,7 @@ Este metodo es ideal para esos casos, te permite obtener los comentarios de a po
 
 Por ejemplo, si paginatedSize es 10 y el video tiene 50 comentarios. Te devolvera los primeros 10 y un token para obtener los comentarios siguientes, con la funcion **getNextCommentsPage**.
 
-### Función getNextCommentsPage
+## Función getNextCommentsPage
 
 
 ```
