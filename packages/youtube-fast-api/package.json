@@ -3,11 +3,7 @@
   "version": "1.0.4",
   "description": "A youtube api for easier data management",
   "main": "index.js",
-  "dependencies": {
-    "coffee-register": "^2.2.0",
-    "gapi": "0.0.3",
-    "googleapis": "^87.0.0"
-  },
+  "dependencies": {},
   "homepage": "https://github.com/damiansire/GetYoutubeData#readme",
   "repository": {
     "type": "git",
