@@ -1,4 +1,7 @@
+<br>
+
 # YouTube Fast Api
+<br>
 
 ## Introducción 
 
@@ -8,7 +11,10 @@ Esta primera version, únicamente contiene información con respecto a los comen
 
 Estoy abierto a agregarle mas funcionalidad, si tienes alguna petición o sugerencia, puedes contactarme a mi [Twitter](https://twitter.com/damiansire), [Instagram](https://www.instagram.com/damiansire/) o a damiansirecontacto@gmail.com.
 
+<br>
+
 # Empezando
+<br>
 
 ## Obtener Api Key de Google YouTube Data V3
 
@@ -17,6 +23,8 @@ Para hacer request a la **Api de YouTube**, necesitamos la **Api Key de Google Y
 Para ello, debes de seguir los pasos de este tutorial. 
 https://developers.google.com/youtube/v3/getting-started?hl=es
 
+<br>
+
 ## Instalación
 
 Para instalar este paquete, debes hacerlo mediante el comando
@@ -24,8 +32,10 @@ Para instalar este paquete, debes hacerlo mediante el comando
 ```
 npm i youtube-fast-api
 ```
+<br>
 
 ## Inicialización 
+
 
 Una vez instalado el paquete, puedes usarlo en tu aplicación, instanciando el cliente de la **API**. 
 
@@ -39,16 +49,21 @@ ytClient = new youtubeClient(apiKeyObtenidaEnElTutorialDeGoogleDeArriba);
 
 Hecho esto, ya tienes acceso al cliente de la **API**.
 
+<br>
+
 # Funcionalidades
 
-## Función getAllComments 
+<br>
 
+## Función getAllComments 
 
 ```
 getAllComments( videoId )
 ```
 
 Dado el ID de un video, esta función te devuelve todos los comentarios que hay en el.
+
+<br>
 
 ## Función getPaginatedComments 
 
@@ -63,6 +78,8 @@ Cuando el video tiene muchos comentarios se hace difícil y pesado manejar tanto
 Este método es ideal para esos casos, te permite obtener los comentarios de a poco. 
 
 Por ejemplo, si paginatedSize es 10 y el video tiene 50 comentarios. Te retornara los primeros 10 y un token para obtener los comentarios siguientes, con la función **getNextCommentsPage**.
+
+<br>
 
 ## Función getNextCommentsPage
 
