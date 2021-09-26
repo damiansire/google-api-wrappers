@@ -8,6 +8,11 @@
     "gapi": "0.0.3",
     "googleapis": "^87.0.0"
   },
+  "homepage": "https://github.com/damiansire/GetYoutubeData#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damiansire/GetYoutubeData.git"
+  },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
