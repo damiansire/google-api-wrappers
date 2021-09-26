@@ -95,3 +95,28 @@ Cuando aplicas la función **getPaginatedComments**, devuelve los comentarios de
 Entonces, necesitas ir a buscar los siguientes, estos se hace con la función **getNextCommentsPage**.
 
 La misma recibe como parámetro el id de un video, el token que retorno la función anterior y el tamaño de la pagina.
+
+<br>
+
+
+# Ejemplos de código
+
+<br>
+
+## Obtener todos los comentarios de un video
+
+```
+const tuApiKey = "aca tu api key";
+
+const videoId = "ZiLaYZ1IMIo"; //Aca el id del video
+
+const youtubeClient = require("youtube-fast-api")
+
+const ytClient = new youtubeClient(tuApiKey);
+
+const videoComments = ytClient.getAllComments(videoId);
+
+videoComments.then(videoData => {
+    console.log(videoData.map(comment => comment.authorDisplayName))
+})
+```
