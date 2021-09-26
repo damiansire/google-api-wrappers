@@ -12,7 +12,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "youtube fast api",
+    "youtube api",
+    "youtube-fast-api",
+    "extract comments",
+    "youtube comments",
+    "youtube",
+    "comments",
+    "extract"
+  ],
   "author": "Damian Sire <damiansire@hotmail.com>",
   "license": "ISC"
 }
