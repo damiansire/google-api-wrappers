@@ -2,7 +2,7 @@
 
 ## Introduccion 
 
-Este paquete, consiste en un wrapper de la API de Yotutube para Node. 
+Este paquete, consiste en un wrapper de la **API de Yotutube** para **Node**. 
 
 Esta primera version, unicamente contiene informacion con respecto a los comentarios.
 
@@ -12,7 +12,7 @@ Estoy abierto a agregarle mas funcionalidad, si tienes alguna peticion o sugeren
 
 ## Obtener Api Key de Google Youtube Data V3
 
-Para hacer request a la Api de Youtube, necesitamos la Api Key de Google Youtube Data V3. 
+Para hacer request a la **Api de Youtube**, necesitamos la **Api Key de Google Youtube Data V3**. 
 
 Para ello, debes de seguir los pasos de este tutorial. 
 https://developers.google.com/youtube/v3/getting-started?hl=es
@@ -27,7 +27,7 @@ npm i youtube-fast-api
 
 ## Inicializacion 
 
-Una vez instalado el paquete, puedes usarlo en tu aplicacion, instanaciando el cliente de la api. 
+Una vez instalado el paquete, puedes usarlo en tu aplicacion, instanaciando el cliente de la **API**. 
 
 Esto puedes hacerlo de la siguiente manera:
 
@@ -37,7 +37,7 @@ const youtubeClient = require("youtube-fast-api")
 ytClient = new youtubeClient(apiKeyObtenidaEnElTutorialDeGoogleDeArriba);
 ```
 
-Hecho esto, ya tienes acceso al cliente de la API.
+Hecho esto, ya tienes acceso al cliente de la **API**.
 
 # Funcionalidades
 
@@ -64,7 +64,7 @@ Cuando el video tiene muchos comentarios se hace dificil y pesado manejar tantos
 
 Este metodo es ideal para esos casos, te permite obtener los comentarios de a poco. 
 
-Por ejemplo, si paginatedSize es 10 y el video tiene 50 comentarios. Te devolvera los primeros 10 y un token para obtener los comentarios siguientes, con la funcion getNextCommentsPage.
+Por ejemplo, si paginatedSize es 10 y el video tiene 50 comentarios. Te devolvera los primeros 10 y un token para obtener los comentarios siguientes, con la funcion **getNextCommentsPage**.
 
 ### Función getNextCommentsPage
 
@@ -75,6 +75,6 @@ getNextCommentsPage(videoId, token, paginatedSize)
 ```
 Cuando aplicas la funcion **getPaginatedComments**, devuelve los comentarios de a pedazos. 
 
-Entonces, necesitas ir a buscar los siguientes, estos se hace con la funcion getNextCommentsPage.
+Entonces, necesitas ir a buscar los siguientes, estos se hace con la funcion **getNextCommentsPage**.
 
 La misma recibe como parametro el id de un video, el token que devolvio la funcion anterior y el tamaño de la pagina.
