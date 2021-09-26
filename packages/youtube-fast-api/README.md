@@ -21,7 +21,10 @@ Estoy abierto a agregarle mas funcionalidad, si tienes alguna petición o sugere
 Para hacer request a la **Api de YouTube**, necesitamos la **Api Key de Google YouTube Data V3**. 
 
 Para ello, debes de seguir los pasos de este tutorial. 
+
 https://developers.google.com/youtube/v3/getting-started?hl=es
+
+En caso de que lo prefiera en video: https://youtu.be/zVJKcbjE52w
 
 <br>
 
@@ -44,7 +47,7 @@ Esto puedes hacerlo de la siguiente manera:
 ```
 const youtubeClient = require("youtube-fast-api")
 
-ytClient = new youtubeClient(apiKeyObtenidaEnElTutorialDeGoogleDeArriba);
+const ytClient = new youtubeClient(apiKeyObtenidaEnElTutorialDeGoogleDeArriba);
 ```
 
 Hecho esto, ya tienes acceso al cliente de la **API**.
