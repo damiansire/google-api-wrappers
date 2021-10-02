@@ -18,6 +18,7 @@ youtubeClient.prototype.getPaginatedComments = async function (videoId, paginate
 }
 
 youtubeClient.prototype.getNextCommentsPage = async function (paginatedSize) {
+    if (!this.nextPageToken) return []
     paginatedSize = paginatedSize ?? this.paginatedSize;
     const commentsData = await getNextCommentsPage(this.apiKey, this.videoId, this.nextPageToken, paginatedSize)
     this.nextPageToken = commentsData.nextPageToken;
