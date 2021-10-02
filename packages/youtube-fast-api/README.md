@@ -88,13 +88,14 @@ Por ejemplo, si paginatedSize es 10 y el video tiene 50 comentarios. Te retornar
 
 
 ```
-getNextCommentsPage(videoId, token, paginatedSize) 
+getNextCommentsPage(paginatedSize) 
 ```
 Cuando aplicas la función **getPaginatedComments**, devuelve los comentarios de a pedazos. 
 
 Entonces, necesitas ir a buscar los siguientes, estos se hace con la función **getNextCommentsPage**.
 
-La misma recibe como parámetro el id de un video, el token que retorno la función anterior y el tamaño de la pagina.
+La misma recibe como parámetro la cantidad de comentarios que quieres traer.
+
 
 <br>
 
@@ -106,17 +107,41 @@ La misma recibe como parámetro el id de un video, el token que retorno la funci
 ## Obtener todos los comentarios de un video
 
 ```
-const tuApiKey = "aca tu api key";
-
-const videoId = "ZiLaYZ1IMIo"; //Aca el id del video
-
 const youtubeClient = require("youtube-fast-api")
 
 const ytClient = new youtubeClient(tuApiKey);
+
+const videoId = "PaRam-aY9p0"; //Aca el id del video
 
 const videoComments = ytClient.getAllComments(videoId);
 
 videoComments.then(videoData => {
     console.log(videoData.map(comment => comment.authorDisplayName))
 })
+```
+
+## Ejemplo de paginado
+
+```
+const youtubeClient = require("youtube-fast-api")
+
+const ytClient = new youtubeClient(tuApiKey);
+
+const videoId = "PaRam-aY9p0"; //Aca el id del video
+
+(async () => {
+
+    const firstPage = await ytClient.
+    //Trae los primeros 20 comentarios
+    getPaginatedComments(videoId, 20);
+
+    console.log(firstPage)
+
+    //Trae los siguientes 20 comentarios
+    const nextPageResult = await ytClient.getNextCommentsPage(20)
+
+    console.log(nextPageResult)
+
+})();
+
 ```
