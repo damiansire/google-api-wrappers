@@ -1,5 +1,5 @@
 const { getAllComments, getPaginatedComments, getNextCommentsPage } = require("./controllers/commentsController")
-const { getAllVideos } = require("./controllers/videoController")
+const { getAllVideosByChannelId, getAllPlaylistByChannelId } = require("./controllers/videoController")
 function youtubeClient(apiKey) {
     this.apiKey = apiKey;
 }
@@ -26,7 +26,11 @@ youtubeClient.prototype.getNextCommentsPage = async function (paginatedSize) {
 }
 
 youtubeClient.prototype.getAllVideosByChannelId = async function (channelId) {
-    return getAllVideos(this.apiKey, channelId);
+    return getAllVideosByChannelId(this.apiKey, channelId);
+}
+
+youtubeClient.prototype.getPlaylistByChannelId = async function (channelId) {
+    return getAllPlaylistByChannelId(this.apiKey, channelId);
 }
 
 module.exports = youtubeClient;
