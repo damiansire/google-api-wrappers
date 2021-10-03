@@ -120,6 +120,8 @@ Cuando aplicas la función **getPlaylistByChannelId**, devuelve todos los id, de
 
 <br>
 
+EL TAMAÑO DE LA PAGINA PUEDE NO ESTAR DEFINIDO
+
 # Ejemplos de código
 
 <br>
