@@ -1,16 +1,22 @@
-const { makeRequest } = require("../adapters/youtubeApi");
-const { getVideosByUserNameUrl, getVideosByChannelIdUrl } = require("../adapters/videoAdapter")
-
-async function getVideosByUsername(apiKey, channelUsername) {
-    let channelDataUrl = getVideosByUserNameUrl(apiKey, channelUsername);
-    let channelDataResponse = await makeRequest(channelDataUrl);
-    return responseToVideoId(channelDataResponse);
-}
+const { makeRequest } = require('../adapters/youtubeApi');
+const { getVideosByChannelIdUrl, getNextPageTokenUrl } = require('../adapters/videoAdapter')
 
 async function getVideosByChannelId(apiKey, channelId) {
     let channelDataUrl = getVideosByChannelIdUrl(apiKey, channelId);
     let channelDataResponse = await makeRequest(channelDataUrl);
     return responseToVideoId(channelDataResponse);
+}
+
+async function getPaginatedVideosByChannelId(apiKey, channelId, pageSize) {
+    const getVideosUrl = getNextPageTokenUrl(apiKey, channelId, pageSize, '');
+    let videosResponse = await makeRequest(getVideosUrl);
+    return responseToVideoId(videosResponse);
+}
+
+async function getNextVideosPage(apiKey, videoId, paginatedSize, token) {
+    nextPageUrl = getNextPageTokenUrl(apiKey, videoId, paginatedSize, token)
+    videosResponse = await makeRequest(nextPageUrl);
+    return responseToVideoId(videosResponse);
 }
 
 async function getPlaylistByChannelId(apiKey, channelId) {
@@ -40,8 +46,10 @@ function dtoToVideo(item) {
 function dtoToPlaylist(item) {
     return item.id.playlistId;
 }
+
 module.exports = {
-    getVideosByUsername,
     getVideosByChannelId,
-    getPlaylistByChannelId
+    getPlaylistByChannelId,
+    getPaginatedVideosByChannelId,
+    getNextVideosPage
 }
