@@ -1,16 +1,29 @@
+const https = require('https');
 
-const GetSpecificCommentAmountUrl = (apiKey, videoId, paginatedSize = 20) => {
-    return `https://www.googleapis.com/youtube/v3/commentThreads?part=id%2Csnippet&maxResults=${paginatedSize}&videoId=${videoId}&key=${apiKey}`
+function makeRequest(url) {
+    return new Promise(function (resolve, reject) {
+
+        https.get(url, res => {
+            let data = [];
+            const headerDate = res.headers && res.headers.date ? res.headers.date : 'No response date';
+            console.log('Status Code:', res.statusCode);
+            console.log('Date in Response header:', headerDate);
+
+            res.on('data', chunk => {
+                data.push(chunk);
+            });
+
+            res.on('end', () => {
+                console.log('Response ended: ');
+                const users = JSON.parse(Buffer.concat(data).toString());
+                resolve(users)
+            });
+        }).on('error', err => {
+            console.log('Error: ', err.message);
+            reject(err)
+        });
+
+    })
 }
 
-const getNextPageTokenUrl = (apiKey, videoId, nextPageToken, paginatedSize = 20) => {
-    return `https://youtube.googleapis.com/youtube/v3/commentThreads?part=id%2Csnippet&maxResults=${paginatedSize}&pageToken=${nextPageToken}&videoId=${videoId}&key=${apiKey}`
-}
-
-const getVideoCommentsUrl = (apiKey, videoId) => {
-    return `https://www.googleapis.com/youtube/v3/commentThreads?part=id%2Csnippet&videoId=${videoId}&key=${apiKey}`
-}
-
-exports.GetSpecificCommentAmountUrl = GetSpecificCommentAmountUrl;
-exports.getNextPageTokenUrl = getNextPageTokenUrl;
-exports.getVideoCommentsUrl = getVideoCommentsUrl;
+exports.makeRequest = makeRequest;

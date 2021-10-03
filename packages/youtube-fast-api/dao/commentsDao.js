@@ -1,5 +1,5 @@
 const { makeRequest } = require("../adapters/commentsAdapter");
-const { getVideoCommentsUrl, GetSpecificCommentAmountUrl, getNextPageTokenUrl} = require("../adapters/youtubeApi")
+const { getVideoCommentsUrl, GetSpecificCommentAmountUrl, getNextPageTokenUrl } = require("../adapters/youtubeApi")
 
 async function getComments(apiKey, videoId, commentAmount) {
     let threadsUrl = commentAmount ? GetSpecificCommentAmountUrl(apiKey, videoId, commentAmount) : getVideoCommentsUrl(apiKey, videoId);
@@ -8,15 +8,15 @@ async function getComments(apiKey, videoId, commentAmount) {
     return { nextPageToken: commentsResponse.nextPageToken, comments: commentsData };
 }
 
-async function getNextCommentsPage(apiKey, videoId, token, paginatedSize){
+async function getNextCommentsPage(apiKey, videoId, token, paginatedSize) {
     nextPageUrl = getNextPageTokenUrl(apiKey, videoId, token, paginatedSize)
     commentsResponse = await makeRequest(nextPageUrl);
     let commentsData = responseToComments(commentsResponse)
-    return {nextPageToken : commentsResponse.nextPageToken, comments : commentsData};
+    return { nextPageToken: commentsResponse.nextPageToken, comments: commentsData };
 }
 
-function responseToComments(commentsResponse){
-return commentsResponse.items.map(comment => dtoToComment(comment));
+function responseToComments(commentsResponse) {
+    return commentsResponse.items.map(comment => dtoToComment(comment));
 }
 
 function dtoToComment(comment) {
