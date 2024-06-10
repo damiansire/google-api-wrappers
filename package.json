@@ -1,5 +1,5 @@
 {
-  "name": "google-sheet-wizard",
+  "name": "google-sheets-wizard",
   "version": "0.0.0",
   "description": "Library for easy interaction with Google Sheets. Read, write, and update data effortlessly. Simplify your workflows and automate tasks.",
   "main": "dist/index.js",
@@ -30,12 +30,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/damiansire/google-sheet-wizard.git"
+    "url": "https://github.com/damiansire/google-sheets-wizard.git"
   },
   "bugs": {
-    "url": "https://github.com/damiansire/google-sheet-wizard/issues"
+    "url": "https://github.com/damiansire/google-sheets-wizard/issues"
   },
-  "homepage": "https://github.com/damiansire/google-sheet-wizard#readme",
+  "homepage": "https://github.com/damiansire/google-sheets-wizard#readme",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.12",
