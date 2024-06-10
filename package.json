@@ -1,7 +1,7 @@
 {
-  "name": "YOUR_PACKAGE_NAME",
+  "name": "google-sheet-wizard",
   "version": "0.0.0",
-  "description": "YOUR_PACKAGE_DESCRIPTION",
+  "description": "Library for easy interaction with Google Sheets. Read, write, and update data effortlessly. Simplify your workflows and automate tasks.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -15,18 +15,25 @@
     "prepublishOnly": "npm run build-test"
   },
   "keywords": [
-    "YOUR_PACKAGE_KEYWORDS"
+    "google sheets",
+    "node.js",
+    "npm package",
+    "data manipulation",
+    "spreadsheet",
+    "automation",
+    "javascript",
+    "typescript"
   ],
   "author": "Damian Sire <damiansirecontacto@gmail.com> (https://damiansire.com)",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "YOUR_PACKAGE_GITHUB_URL.git"
+    "url": "https://github.com/damiansire/google-sheet-wizard.git"
   },
   "bugs": {
-    "url": "YOUR_PACKAGE_GITHUB_URL/issues"
+    "url": "https://github.com/damiansire/google-sheet-wizard/issues"
   },
-  "homepage": "YOUR_PACKAGE_GITHUB_URL#readme",
+  "homepage": "https://github.com/damiansire/google-sheet-wizard#readme",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.12",
