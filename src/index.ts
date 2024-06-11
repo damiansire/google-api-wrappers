@@ -1,4 +1,11 @@
-class GoogleSheetsWizard {}
+class GoogleSheetsWizard {
+  spreadsheetId: string;
+  auth;
+  constructor(auth, spreadsheetId: string) {
+    this.spreadsheetId = spreadsheetId;
+    this.auth = auth;
+  }
+}
 
 export default GoogleSheetsWizard;
 
