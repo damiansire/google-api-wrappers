@@ -1,8 +1,8 @@
-class YOUR_PACKAGE {}
+class GoogleSheetsWizard {}
 
-export default YOUR_PACKAGE;
+export default GoogleSheetsWizard;
 
 // For CommonJS default export support
-module.exports = YOUR_PACKAGE;
-module.exports.default = YOUR_PACKAGE;
+module.exports = GoogleSheetsWizard;
+module.exports.default = GoogleSheetsWizard;
 module.exports.__esModule = true;

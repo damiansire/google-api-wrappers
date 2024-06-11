@@ -1,9 +1,9 @@
-export const testPackage = (YOUR_PACKAGE: any) => {
-  describe("YOUR_PACKAGE", () => {
+export const testPackage = (GoogleSheetsWizard: any) => {
+  describe("GoogleSheetsWizard", () => {
     let wizard: any;
 
     beforeAll(() => {
-      expect(YOUR_PACKAGE).toBeDefined();
+      expect(GoogleSheetsWizard).toBeDefined();
     });
   });
 };
