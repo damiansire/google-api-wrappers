@@ -5,3 +5,4 @@ coverage/
 # dependencies
 node_modules/
 
+run/

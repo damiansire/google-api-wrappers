@@ -1,12 +1,12 @@
-import DateWizard from "../dist/index";
+import GoogleSheetsWizard from "../dist/index";
 
 import { testPackage } from "../test-helpers/test-package";
 describe("TEST BUILDED PACKAGE", () => {
   describe("require method", () => {
-    const RequireDateWizard = require("../dist/index");
-    testPackage(RequireDateWizard);
+    const RequireGoogleSheetsWizard = require("../dist/index");
+    testPackage(RequireGoogleSheetsWizard);
   });
   describe("import method", () => {
-    testPackage(DateWizard);
+    testPackage(GoogleSheetsWizard);
   });
 });

@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "clean": "rmdir /s /q dist",
+    "start": "tsc && node ./src/run/start.js",
     "test": "jest --testMatch \"**/src/**/*.spec.ts\"",
     "build": "npm run clean && tsc",
     "build-test": "npm run build && jest --testMatch \"**/dist-test/builded-package.spec.ts\"",
@@ -43,5 +44,8 @@
     "ts-jest": "^29.1.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "googleapis": "^140.0.0"
   }
 }
