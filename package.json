@@ -1,6 +1,6 @@
 {
   "name": "google-sheets-wizard",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Library for easy interaction with Google Sheets. Read, write, and update data effortlessly. Simplify your workflows and automate tasks.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
