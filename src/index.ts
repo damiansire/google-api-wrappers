@@ -7,8 +7,8 @@ class GoogleSheetsWizard {
     this.spreadsheetId = spreadsheetId;
     this.auth = auth;
   }
-  getRange() {
-    return getRange(this.auth, this.spreadsheetId, "H2:J");
+  getRange(range) {
+    return getRange(this.auth, this.spreadsheetId, range);
   }
 }
 
