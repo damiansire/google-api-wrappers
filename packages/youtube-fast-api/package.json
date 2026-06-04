@@ -1,6 +1,6 @@
 {
   "name": "youtube-fast-api",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A youtube api for easier data management",
   "main": "index.js",
   "homepage": "https://github.com/damiansire/GetYoutubeData#readme",
