@@ -3,10 +3,11 @@
   "version": "2.0.2",
   "description": "A youtube api for easier data management",
   "main": "index.js",
-  "homepage": "https://github.com/damiansire/GetYoutubeData#readme",
+  "homepage": "https://github.com/damiansire/google-api-wrappers/tree/main/packages/youtube-fast-api#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/damiansire/GetYoutubeData.git"
+    "url": "git+https://github.com/damiansire/google-api-wrappers.git",
+    "directory": "packages/youtube-fast-api"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
@@ -27,5 +28,8 @@
     "extract"
   ],
   "author": "Damian Sire <damiansire@hotmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/damiansire/google-api-wrappers/issues"
+  }
 }

@@ -31,12 +31,13 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/damiansire/google-sheets-wizard.git"
+    "url": "git+https://github.com/damiansire/google-api-wrappers.git",
+    "directory": "packages/google-sheets-wizard"
   },
   "bugs": {
-    "url": "https://github.com/damiansire/google-sheets-wizard/issues"
+    "url": "https://github.com/damiansire/google-api-wrappers/issues"
   },
-  "homepage": "https://github.com/damiansire/google-sheets-wizard#readme",
+  "homepage": "https://github.com/damiansire/google-api-wrappers/tree/main/packages/google-sheets-wizard#readme",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.12",
