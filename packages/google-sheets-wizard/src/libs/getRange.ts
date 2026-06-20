@@ -1,10 +1,12 @@
+import type { SheetsAuth } from "../index";
+
 const { google } = require("googleapis");
 
 async function getRange(
-  auth: any,
+  auth: SheetsAuth,
   spreadsheetId: string,
   range: string,
-  objectKeys: any | undefined
+  objectKeys?: string[]
 ) {
   try {
     const sheets = google.sheets({ version: "v4", auth });
