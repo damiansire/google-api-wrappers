@@ -4,8 +4,19 @@
   "description": "Library for easy interaction with Google Sheets. Read, write, and update data effortlessly. Simplify your workflows and automate tasks.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "!dist/**/*.map"
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
@@ -28,7 +39,7 @@
     "typescript"
   ],
   "author": "Damian Sire <damiansirecontacto@gmail.com> (https://damiansire.com)",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/damiansire/google-api-wrappers.git",
