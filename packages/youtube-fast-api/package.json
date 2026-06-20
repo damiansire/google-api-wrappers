@@ -3,6 +3,17 @@
   "version": "2.0.2",
   "description": "A youtube api for easier data management",
   "main": "index.js",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "index.js",
+    "adapters",
+    "controllers",
+    "dao",
+    "README.md"
+  ],
   "homepage": "https://github.com/damiansire/google-api-wrappers/tree/main/packages/youtube-fast-api#readme",
   "repository": {
     "type": "git",
@@ -27,7 +38,7 @@
     "comments",
     "extract"
   ],
-  "author": "Damian Sire <damiansire@hotmail.com>",
+  "author": "Damian Sire <damiansirecontacto@gmail.com> (https://damiansire.com)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/damiansire/google-api-wrappers/issues"
