@@ -14,7 +14,9 @@ function youtubeClient(apiKey) {
     this.nextVideosPageToken = "";
 }
 
-youtubeClient.prototype.getAllComments = (videoId) => getAllComments(this.apiKey, videoId);
+youtubeClient.prototype.getAllComments = async function (videoId) {
+    return getAllComments(this.apiKey, videoId);
+};
 
 youtubeClient.prototype.getPaginatedComments = async function (videoId, pageSize) {
     if (typeof videoId === 'number') throw new TypeError('expected a videoId string parameter');
