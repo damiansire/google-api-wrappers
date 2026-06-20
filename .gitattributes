@@ -1,0 +1,11 @@
+# Normaliza fines de linea: el repo guarda LF, checkout segun plataforma.
+* text=auto eol=lf
+
+# Binarios: nunca normalizar.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
