@@ -8,7 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "clean": "rmdir /s /q dist",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "start": "tsc && node ./src/run/start.js",
     "test": "jest --testMatch \"**/src/**/*.spec.ts\"",
     "build": "npm run clean && tsc",
