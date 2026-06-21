@@ -126,6 +126,31 @@ test('controller: searchVideos filtra resultados que no son videos (canales/play
   assert.deepStrictEqual(hits.map((h) => h.videoId), ['v1']);
 });
 
+test('controller: searchVideos clampea pageSize al tope de 50 que admite search.list', async () => {
+  setResponses(searchResponse(['v1'], undefined));
+  await videoController.searchVideos('KEY', 'x', { maxPages: 1, pageSize: 500 });
+  assert.ok(requestedUrls[0].includes('maxResults=50'), 'pageSize > 50 debe clampearse a 50');
+});
+
+test('controller: searchVideos clampea pageSize negativo a 0', async () => {
+  setResponses(searchResponse(['v1'], undefined));
+  await videoController.searchVideos('KEY', 'x', { maxPages: 1, pageSize: -10 });
+  assert.ok(requestedUrls[0].includes('maxResults=0'), 'pageSize negativo debe clampearse a 0');
+});
+
+test('controller: searchVideos rechaza un order fuera del set permitido', async () => {
+  await assert.rejects(
+    () => videoController.searchVideos('KEY', 'x', { order: 'popularidad' }),
+    TypeError,
+  );
+});
+
+test('controller: searchVideos acepta los order validos de search.list', async () => {
+  setResponses(searchResponse(['v1'], undefined));
+  await videoController.searchVideos('KEY', 'x', { order: 'viewCount', maxPages: 1 });
+  assert.ok(requestedUrls[0].includes('order=viewCount'), 'el order valido debe llegar a la URL');
+});
+
 // --- client ---
 
 test('client: getVideoMetadata devuelve el primer item', async () => {
