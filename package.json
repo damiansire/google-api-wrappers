@@ -4,5 +4,8 @@
   "description": "Lightweight Node.js wrappers for Google APIs — YouTube Data API and Google Sheets — each published to npm under its own name.",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "test": "npm test --workspaces --if-present"
+  }
 }

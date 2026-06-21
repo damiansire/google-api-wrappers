@@ -14,8 +14,8 @@ async function getPaginatedVideosByChannelId(apiKey, channelId, pageSize) {
 }
 
 async function getNextVideosPage(apiKey, videoId, paginatedSize, token) {
-    nextPageUrl = getNextPageTokenUrl(apiKey, videoId, paginatedSize, token)
-    videosResponse = await makeRequest(nextPageUrl);
+    const nextPageUrl = getNextPageTokenUrl(apiKey, videoId, paginatedSize, token)
+    const videosResponse = await makeRequest(nextPageUrl);
     return responseToVideoId(videosResponse);
 }
 
