@@ -5,13 +5,13 @@ async function getAllVideosByChannelId(apiKey, channelId) {
     let allVideosId = [];
     const channelData = await getPaginatedVideosByChannelId(apiKey, channelId, pageSize);
     allVideosId = allVideosId.concat(channelData.allVideosId)
-    let actualRequest = 1;
-    while (channelData.nextPageToken && actualRequest < 4) {
-        actualRequest++;
-        let newPage = await getNextVideosPage(apiKey, channelId, pageSize, channelData.nextPageToken);
+    let nextPageToken = channelData.nextPageToken;
+    while (nextPageToken) {
+        let newPage = await getNextVideosPage(apiKey, channelId, pageSize, nextPageToken);
         allVideosId = allVideosId.concat(newPage.allVideosId);
+        nextPageToken = newPage.nextPageToken;
     }
-    return allVideosId;
+    return [...new Set(allVideosId)];
 }
 
 
