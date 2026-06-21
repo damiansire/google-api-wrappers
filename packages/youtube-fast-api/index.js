@@ -23,7 +23,7 @@ youtubeClient.prototype.getPaginatedComments = async function (videoId, pageSize
     const commentsData = await getPaginatedComments(this.apiKey, videoId, pageSize);
     this.videoId = videoId;
     this.commentsPageSize = pageSize;
-    this.nextCommentsPageToken = commentsData.nextCommentsPageToken;
+    this.nextCommentsPageToken = commentsData.nextPageToken;
     return commentsData.comments;
 };
 
@@ -31,7 +31,7 @@ youtubeClient.prototype.getNextCommentsPage = async function (pageSize) {
     if (!this.nextCommentsPageToken) return [];
     const size = pageSize ?? this.commentsPageSize;
     const commentsData = await getNextCommentsPage(this.apiKey, this.videoId, this.nextCommentsPageToken, size)
-    this.nextCommentsPageToken = commentsData.nextCommentsPageToken;
+    this.nextCommentsPageToken = commentsData.nextPageToken;
     return commentsData.comments;
 };
 
