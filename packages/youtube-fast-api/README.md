@@ -7,7 +7,8 @@
 
 Este paquete, consiste en un wrapper de la **API de YouTube** para **Node**. 
 
-Esta primera version, únicamente contiene información con respecto a los comentarios.
+Permite traer comentarios, listar los videos/playlists de un canal, obtener la
+metadata de videos (título, tags, estadísticas) y buscar videos por término.
 
 Estoy abierto a agregarle mas funcionalidad, si tienes alguna petición o sugerencia, puedes contactarme a mi [Twitter](https://twitter.com/damiansire), [Instagram](https://www.instagram.com/damiansire/) o a damiansirecontacto@gmail.com.
 
@@ -117,6 +118,50 @@ Cuando aplicas la función **getAllVideos**, devuelve todos los id de todos los 
 getPlaylist(channelId) 
 ```
 Cuando aplicas la función **getPlaylist**, devuelve todos los id, de las listas de reproducción de ese canal.
+
+<br>
+
+## Función getVideosMetadata
+
+
+```
+getVideosMetadata(videoIds) 
+```
+Dado un array de ids de video, devuelve la metadata de cada uno: `id`, `channelId`,
+`title`, `description`, `tags`, `viewCount`, `likeCount`, `commentCount` y
+`publishedAt`. Parte internamente los pedidos en bloques de 50 (el límite de
+`videos.list`), así que podés pasarle muchos ids de una.
+
+Las estadísticas que el video tenga ocultas vienen en `null` (se distinguen de un
+0 real). Cada bloque de hasta 50 ids cuesta 1 unidad de cuota.
+
+<br>
+
+## Función getVideoMetadata
+
+
+```
+getVideoMetadata(videoId) 
+```
+Igual que **getVideosMetadata** pero para un solo video; devuelve el objeto de
+metadata o `null` si la API no lo encontró.
+
+<br>
+
+## Función searchVideos
+
+
+```
+searchVideos(query, options) 
+```
+Busca videos por término (`query`) y devuelve una lista de resultados con
+`videoId`, `channelId`, `title` y `publishedAt`. `options` admite:
+
+- `maxPages` (default `1`): páginas a traer. **Cada página cuesta 100 unidades**
+  de cuota, por eso este es el tope de costo.
+- `order` (default `'relevance'`): usá `'viewCount'` para descubrir lo más visto
+  (trending).
+- `pageSize` (default `50`).
 
 <br>
 
