@@ -1,5 +1,5 @@
 const { makeRequest } = require('../adapters/youtubeApi');
-const { getVideosByChannelIdUrl, getNextPageTokenUrl, getVideosMetadataUrl, getSearchVideosUrl } = require('../adapters/videoAdapter')
+const { getVideosByChannelIdUrl, getNextPageTokenUrl, getPlaylistsByChannelIdUrl, getVideosMetadataUrl, getSearchVideosUrl } = require('../adapters/videoAdapter')
 
 async function getVideosByChannelId(apiKey, channelId) {
     let channelDataUrl = getVideosByChannelIdUrl(apiKey, channelId);
@@ -19,9 +19,9 @@ async function getNextVideosPage(apiKey, videoId, paginatedSize, token) {
     return responseToVideoId(videosResponse);
 }
 
-async function getPlaylistByChannelId(apiKey, channelId) {
-    let channelDataUrl = getVideosByChannelIdUrl(apiKey, channelId);
-    let channelDataResponse = await makeRequest(channelDataUrl);
+async function getPlaylistByChannelId(apiKey, channelId, pageToken = '') {
+    const channelDataUrl = getPlaylistsByChannelIdUrl(apiKey, channelId, 50, pageToken);
+    const channelDataResponse = await makeRequest(channelDataUrl);
     return responseToPlaylistId(channelDataResponse);
 }
 
@@ -44,7 +44,9 @@ function dtoToVideo(item) {
 }
 
 function dtoToPlaylist(item) {
-    return item.id.playlistId;
+    // playlists.list devuelve el id de la playlist directamente en `item.id`
+    // (string), no en `item.id.playlistId` como hace search.list.
+    return item.id;
 }
 
 // --- videos.list: metadata de videos ---
