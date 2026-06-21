@@ -1,0 +1,153 @@
+'use strict';
+
+// Suite de metadata (videos.list) y busqueda (search.list): mockea makeRequest
+// (la frontera de red) y ejercita dao -> controller -> client sin tocar la red.
+// Igual que videos.test.js, se parchea el export del adapter ANTES de requerir
+// las capas bajo prueba (los dao desestructuran makeRequest en tiempo de require).
+
+const test = require('node:test');
+const assert = require('node:assert');
+
+const youtubeApi = require('../adapters/youtubeApi');
+
+let pending = [];
+const requestedUrls = [];
+
+function mockMakeRequest(url) {
+  requestedUrls.push(url);
+  if (pending.length === 0) {
+    return Promise.reject(new Error(`mockMakeRequest: llamada inesperada a ${url}`));
+  }
+  return Promise.resolve(pending.shift());
+}
+
+youtubeApi.makeRequest = mockMakeRequest;
+
+function setResponses(...responses) {
+  pending = responses;
+  requestedUrls.length = 0;
+}
+
+const videoController = require('../controllers/videoController');
+const YoutubeClient = require('../index');
+
+// Respuesta cruda de videos.list (part=snippet,statistics). Las cuentas vienen
+// como STRING, tal cual la API.
+function videosResponse(...items) {
+  return { items };
+}
+
+function videoItem(id, { hideStats = false } = {}) {
+  const item = {
+    id,
+    snippet: {
+      channelId: 'UCcanal',
+      title: `titulo ${id}`,
+      description: 'desc',
+      tags: ['a', 'b'],
+      publishedAt: '2021-09-27T03:00:00Z',
+    },
+  };
+  if (!hideStats) {
+    item.statistics = { viewCount: '1234', likeCount: '56', commentCount: '7' };
+  }
+  return item;
+}
+
+function searchResponse(videoIds, nextPageToken) {
+  return {
+    nextPageToken,
+    items: videoIds.map((id) => ({
+      id: { videoId: id },
+      snippet: { channelId: 'UCotro', title: `hit ${id}`, publishedAt: '2021-09-27T03:00:00Z' },
+    })),
+  };
+}
+
+// --- videos.list ---
+
+test('controller: getVideosMetadata mapea snippet+statistics y parsea cuentas string a number', async () => {
+  setResponses(videosResponse(videoItem('v1')));
+  const [meta] = await videoController.getVideosMetadata('KEY', ['v1']);
+  assert.strictEqual(meta.id, 'v1');
+  assert.strictEqual(meta.title, 'titulo v1');
+  assert.deepStrictEqual(meta.tags, ['a', 'b']);
+  assert.strictEqual(meta.viewCount, 1234);
+  assert.strictEqual(meta.likeCount, 56);
+  assert.strictEqual(meta.commentCount, 7);
+  assert.ok(requestedUrls[0].includes('/videos?'), 'debe pegarle a videos.list');
+  assert.ok(requestedUrls[0].includes('id=v1'), 'la URL debe incluir el id');
+});
+
+test('controller: getVideosMetadata deja en null las estadisticas ocultas (no 0)', async () => {
+  setResponses(videosResponse(videoItem('v2', { hideStats: true })));
+  const [meta] = await videoController.getVideosMetadata('KEY', ['v2']);
+  assert.strictEqual(meta.viewCount, null);
+  assert.strictEqual(meta.likeCount, null);
+  assert.strictEqual(meta.commentCount, null);
+});
+
+test('controller: getVideosMetadata chunkea de a 50 ids', async () => {
+  // 51 ids -> 2 requests (50 + 1). Cada request devuelve 1 item.
+  setResponses(videosResponse(videoItem('a')), videosResponse(videoItem('b')));
+  const ids = Array.from({ length: 51 }, (_, i) => `id${i}`);
+  const metas = await videoController.getVideosMetadata('KEY', ids);
+  assert.strictEqual(requestedUrls.length, 2, 'debe hacer exactamente 2 requests');
+  assert.strictEqual(metas.length, 2);
+});
+
+// --- search.list ---
+
+test('controller: searchVideos pagina hasta maxPages y descarta items sin videoId', async () => {
+  setResponses(searchResponse(['v1', 'v2'], 'P2'), searchResponse(['v3'], undefined));
+  const hits = await videoController.searchVideos('KEY', 'angular', { maxPages: 2 });
+  assert.deepStrictEqual(hits.map((h) => h.videoId), ['v1', 'v2', 'v3']);
+  assert.strictEqual(requestedUrls.length, 2);
+  assert.ok(requestedUrls[0].includes('q=angular'), 'la URL debe incluir el query');
+});
+
+test('controller: searchVideos respeta el tope de paginas aunque haya nextPageToken', async () => {
+  // La primera pagina trae token, pero maxPages=1 corta igual.
+  setResponses(searchResponse(['v1', 'v2'], 'P2'));
+  const hits = await videoController.searchVideos('KEY', 'x', { maxPages: 1 });
+  assert.strictEqual(hits.length, 2);
+  assert.strictEqual(requestedUrls.length, 1, 'no debe pedir la segunda pagina');
+});
+
+test('controller: searchVideos filtra resultados que no son videos (canales/playlists)', async () => {
+  setResponses({
+    nextPageToken: undefined,
+    items: [
+      { id: { videoId: 'v1' }, snippet: { title: 't1' } },
+      { id: { channelId: 'UCx' }, snippet: { title: 'un canal' } },
+    ],
+  });
+  const hits = await videoController.searchVideos('KEY', 'x', { maxPages: 1 });
+  assert.deepStrictEqual(hits.map((h) => h.videoId), ['v1']);
+});
+
+// --- client ---
+
+test('client: getVideoMetadata devuelve el primer item', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses(videosResponse(videoItem('v1')));
+  const meta = await client.getVideoMetadata('v1');
+  assert.strictEqual(meta.id, 'v1');
+});
+
+test('client: getVideoMetadata devuelve null si la API no lo encontro', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses(videosResponse()); // items vacio
+  const meta = await client.getVideoMetadata('inexistente');
+  assert.strictEqual(meta, null);
+});
+
+test('client: getVideosMetadata rechaza un argumento que no es array', async () => {
+  const client = new YoutubeClient('KEY');
+  await assert.rejects(() => client.getVideosMetadata('v1'), TypeError);
+});
+
+test('client: searchVideos rechaza un query que no es string', async () => {
+  const client = new YoutubeClient('KEY');
+  await assert.rejects(() => client.searchVideos(123), TypeError);
+});
