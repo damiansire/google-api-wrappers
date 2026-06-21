@@ -40,7 +40,8 @@ youtubeClient.prototype.getAllVideos = async function (channelId) {
 };
 
 youtubeClient.prototype.getPlaylist = async function (channelId) {
-    return getAllPlaylistByChannelId(this.apiKey, channelId);
+    const channelData = await getAllPlaylistByChannelId(this.apiKey, channelId);
+    return [...new Set(channelData.allVideosId)];
 };
 
 //Max 50
