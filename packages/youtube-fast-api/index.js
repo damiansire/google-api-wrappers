@@ -57,7 +57,7 @@ youtubeClient.prototype.getPaginatedChannelVideos = async function (channelId, p
 youtubeClient.prototype.getNextVideosPage = async function (pageSize) {
     if (!this.nextVideosPageToken) return [];
     const size = pageSize ?? this.videosPageSize;
-    const videosData = await getNextVideosPage(this.apiKey, this.videoId, this.nextCommentsPageToken, size)
+    const videosData = await getNextVideosPage(this.apiKey, this.channelId, this.nextVideosPageToken, size)
     this.nextVideosPageToken = videosData.nextPageToken;
     return videosData.allVideosId;
 };
