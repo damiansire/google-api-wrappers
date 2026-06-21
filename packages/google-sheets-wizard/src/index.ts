@@ -44,13 +44,14 @@ class GoogleSheetsWizard {
    * Fetches data from the specified range in the Google Sheet.
    *
    * @param range The range of cells to fetch (e.g., "A1:B5").
-   * @returns A promise that resolves to the fetched data (likely an array of arrays).
-   *
-   * The returned data's format depends on the implementation of the external 'getRange' function.
-   * It's likely a 2D array where each inner array represents a row of data.
+   * @param objectKeys Optional keys to map each row into an object. When
+   *   provided, every row is converted into an object using these keys in
+   *   order; otherwise the raw 2D array of rows is returned.
+   * @returns A promise that resolves to the fetched data: a 2D array of rows,
+   *   or an array of objects when `objectKeys` is supplied.
    */
-  getRange(range: string): Promise<any> {
-    return getRange(this.auth, this.spreadsheetId, range);
+  getRange(range: string, objectKeys?: string[]): Promise<any> {
+    return getRange(this.auth, this.spreadsheetId, range, objectKeys);
   }
 }
 
