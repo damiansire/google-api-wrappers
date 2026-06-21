@@ -161,11 +161,13 @@ Busca videos por término (`query`) y devuelve una lista de resultados con
   de cuota, por eso este es el tope de costo.
 - `order` (default `'relevance'`): usá `'viewCount'` para descubrir lo más visto
   (trending).
-- `pageSize` (default `50`).
+- `pageSize` (default `50`): resultados por página. `search.list` topea
+  `maxResults` en **50**, así que valores mayores se recortan a 50 (y los
+  negativos a 0) antes de llamar a la API.
+- `order` debe ser uno de `date`, `rating`, `relevance`, `title`, `videoCount`
+  o `viewCount`; cualquier otro valor lanza `TypeError`.
 
 <br>
-
-EL TAMAÑO DE LA PAGINA PUEDE NO ESTAR DEFINIDO
 
 # Ejemplos de código
 

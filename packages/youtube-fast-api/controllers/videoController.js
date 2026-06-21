@@ -47,14 +47,24 @@ async function getVideosMetadata(apiKey, videoIds) {
     return all;
 }
 
+// search.list acepta estos valores de `order`; cualquier otro hace que la API
+// devuelva 400.
+const SEARCH_ORDERS = ['date', 'rating', 'relevance', 'title', 'videoCount', 'viewCount'];
+
 // search.list cuesta 100 unidades por pagina: `maxPages` es el tope de costo.
 async function searchVideos(apiKey, query, options = {}) {
     const { maxPages = 1, order = 'relevance', pageSize = 50 } = options;
+    // search.list topea maxResults en 50 y 400ea si se pasa o si el order no es
+    // valido: clampeamos/validamos en el cliente para fallar claro y temprano.
+    if (!SEARCH_ORDERS.includes(order)) {
+        throw new TypeError(`invalid order "${order}"; expected one of: ${SEARCH_ORDERS.join(', ')}`);
+    }
+    const clampedPageSize = Math.min(Math.max(Number(pageSize) || 0, 0), 50);
     let hits = [];
     let pageToken = '';
     let pages = 0;
     while (pages < maxPages) {
-        const page = await videosDao.searchVideosPage(apiKey, query, order, pageSize, pageToken);
+        const page = await videosDao.searchVideosPage(apiKey, query, order, clampedPageSize, pageToken);
         hits = hits.concat(page.hits);
         pages += 1;
         if (!page.nextPageToken || pages >= maxPages) break;
