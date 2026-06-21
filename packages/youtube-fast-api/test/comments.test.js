@@ -116,3 +116,12 @@ test('client: getPaginatedComments rechaza un videoId numerico', async () => {
   const client = new YoutubeClient('KEY');
   await assert.rejects(() => client.getPaginatedComments(123), TypeError);
 });
+
+test('client: los metodos que reciben un videoId rechazan undefined, null, "" y objetos', async () => {
+  const client = new YoutubeClient('KEY');
+  const invalid = [undefined, null, '', {}, 123];
+  for (const bad of invalid) {
+    await assert.rejects(() => client.getAllComments(bad), TypeError, `getAllComments(${JSON.stringify(bad)})`);
+    await assert.rejects(() => client.getPaginatedComments(bad), TypeError, `getPaginatedComments(${JSON.stringify(bad)})`);
+  }
+});

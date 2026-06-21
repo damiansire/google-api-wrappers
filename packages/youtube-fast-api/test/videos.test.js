@@ -146,3 +146,13 @@ test('client: getPaginatedChannelVideos rechaza un channelId numerico', async ()
   const client = new YoutubeClient('KEY');
   await assert.rejects(() => client.getPaginatedChannelVideos(123), TypeError);
 });
+
+test('client: los metodos que reciben un channelId rechazan undefined, null, "" y objetos', async () => {
+  const client = new YoutubeClient('KEY');
+  const invalid = [undefined, null, '', {}, 123];
+  for (const bad of invalid) {
+    await assert.rejects(() => client.getAllVideos(bad), TypeError, `getAllVideos(${JSON.stringify(bad)})`);
+    await assert.rejects(() => client.getPlaylist(bad), TypeError, `getPlaylist(${JSON.stringify(bad)})`);
+    await assert.rejects(() => client.getPaginatedChannelVideos(bad), TypeError, `getPaginatedChannelVideos(${JSON.stringify(bad)})`);
+  }
+});

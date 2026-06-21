@@ -14,12 +14,21 @@ function youtubeClient(apiKey) {
     this.nextVideosPageToken = "";
 }
 
+// Valida que un id publico sea un string no vacio. Centraliza el chequeo para
+// que todos los metodos publicos rechacen undefined/null/""/numero/objeto igual.
+function assertId(value, name) {
+    if (typeof value !== 'string' || !value) {
+        throw new TypeError(`expected a ${name} string parameter`);
+    }
+}
+
 youtubeClient.prototype.getAllComments = async function (videoId) {
+    assertId(videoId, 'videoId');
     return getAllComments(this.apiKey, videoId);
 };
 
 youtubeClient.prototype.getPaginatedComments = async function (videoId, pageSize) {
-    if (typeof videoId === 'number') throw new TypeError('expected a videoId string parameter');
+    assertId(videoId, 'videoId');
     const commentsData = await getPaginatedComments(this.apiKey, videoId, pageSize);
     this.videoId = videoId;
     this.commentsPageSize = pageSize;
@@ -36,17 +45,19 @@ youtubeClient.prototype.getNextCommentsPage = async function (pageSize) {
 };
 
 youtubeClient.prototype.getAllVideos = async function (channelId) {
+    assertId(channelId, 'channelId');
     return getAllVideosByChannelId(this.apiKey, channelId);
 };
 
 youtubeClient.prototype.getPlaylist = async function (channelId) {
+    assertId(channelId, 'channelId');
     const channelData = await getAllPlaylistByChannelId(this.apiKey, channelId);
     return [...new Set(channelData.allVideosId)];
 };
 
 //Max 50
 youtubeClient.prototype.getPaginatedChannelVideos = async function (channelId, pageSize = 50) {
-    if (typeof channelId === 'number') throw new TypeError('expected a channelId string parameter');
+    assertId(channelId, 'channelId');
     const videosData = await getPaginatedVideosByChannelId(this.apiKey, channelId, pageSize);
     this.channelId = channelId;
     this.videosPageSize = pageSize;
