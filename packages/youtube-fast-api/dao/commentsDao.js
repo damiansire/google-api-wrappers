@@ -9,8 +9,8 @@ async function getComments(apiKey, videoId, commentAmount) {
 }
 
 async function getNextCommentsPage(apiKey, videoId, token, paginatedSize) {
-    nextPageUrl = getNextPageTokenUrl(apiKey, videoId, token, paginatedSize)
-    commentsResponse = await makeRequest(nextPageUrl);
+    const nextPageUrl = getNextPageTokenUrl(apiKey, videoId, token, paginatedSize)
+    const commentsResponse = await makeRequest(nextPageUrl);
     let commentsData = responseToComments(commentsResponse)
     return { nextPageToken: commentsResponse.nextPageToken, comments: commentsData };
 }

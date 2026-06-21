@@ -2,12 +2,21 @@ import type { SheetsAuth } from "../index";
 
 const { google } = require("googleapis");
 
+/** A single cell value as returned by the Sheets v4 API. */
+export type Cell = string | number | boolean | null;
+
+/** A row is an ordered list of cell values. */
+export type Row = Cell[];
+
+/** A row mapped onto the supplied `objectKeys`. */
+export type MappedRow = Record<string, Cell>;
+
 async function getRange(
   auth: SheetsAuth,
   spreadsheetId: string,
   range: string,
   objectKeys?: string[]
-) {
+): Promise<Row[] | MappedRow[]> {
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const res = await sheets.spreadsheets.values.get({
@@ -15,16 +24,16 @@ async function getRange(
       range,
     });
 
-    const rows = res.data.values;
+    const rows = res.data.values as Row[] | undefined;
     if (!rows || rows.length === 0) {
       // Throw a specific error instead of just logging it
       throw new Error("No data found in the specified range.");
     }
 
     if (objectKeys) {
-      return rows.map((row: any) =>
-        objectKeys.reduce((obj: any, key: any, index: any) => {
-          obj[key] = row[index] || "";
+      return rows.map((row) =>
+        objectKeys.reduce<MappedRow>((obj, key, index) => {
+          obj[key] = row[index] ?? "";
           return obj;
         }, {})
       );

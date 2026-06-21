@@ -1,6 +1,12 @@
 import type { Common } from "googleapis";
+import type { Row, MappedRow } from "./libs/getRange";
 
-const getRange = require("./libs/getRange");
+const getRange: (
+  auth: SheetsAuth,
+  spreadsheetId: string,
+  range: string,
+  objectKeys?: string[]
+) => Promise<Row[] | MappedRow[]> = require("./libs/getRange");
 
 /**
  * Credentials accepted by the Google Sheets API.
@@ -50,7 +56,10 @@ class GoogleSheetsWizard {
    * @returns A promise that resolves to the fetched data: a 2D array of rows,
    *   or an array of objects when `objectKeys` is supplied.
    */
-  getRange(range: string, objectKeys?: string[]): Promise<any> {
+  getRange(
+    range: string,
+    objectKeys?: string[]
+  ): Promise<Row[] | MappedRow[]> {
     return getRange(this.auth, this.spreadsheetId, range, objectKeys);
   }
 }
