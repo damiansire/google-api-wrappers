@@ -6,6 +6,14 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "npm test --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "test:types": "npm run test:types --workspaces --if-present",
+    "size": "size-limit"
+  },
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^12.1.0",
+    "size-limit": "^12.1.0",
+    "tsd": "^0.33.0"
   }
 }
