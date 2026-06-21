@@ -40,26 +40,20 @@ describe("GoogleSheetsWizard.getRange", () => {
 
   it("throws when the range returns an empty array", async () => {
     mockGet.mockResolvedValue({ data: { values: [] } });
-    const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     const wizard = new GoogleSheetsWizard("auth-token", "sheet-id");
     await expect(wizard.getRange("A1:B2")).rejects.toThrow(
       "No data found in the specified range."
     );
-
-    errSpy.mockRestore();
   });
 
   it("throws when the API response has no values field", async () => {
     mockGet.mockResolvedValue({ data: {} });
-    const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     const wizard = new GoogleSheetsWizard("auth-token", "sheet-id");
     await expect(wizard.getRange("A1:B2")).rejects.toThrow(
       "No data found in the specified range."
     );
-
-    errSpy.mockRestore();
   });
 });
 
@@ -92,40 +86,52 @@ describe("getRange lib — objectKeys mapping", () => {
   });
 });
 
-describe("getRange lib — handleError", () => {
+describe("getRange lib — error decoration", () => {
   beforeEach(() => {
     mockGet.mockReset();
   });
 
-  it("logs a permission message and re-throws on a 403", async () => {
-    const apiError: any = new Error("Forbidden");
-    apiError.code = 403;
+  it("does not write to the console on failure (library must stay quiet)", async () => {
+    const apiError: { code: number; message: string } = Object.assign(
+      new Error("Forbidden"),
+      { code: 403 }
+    );
     mockGet.mockRejectedValue(apiError);
     const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
-      "Forbidden"
-    );
-    expect(errSpy).toHaveBeenCalledWith(
-      "Permission error: Make sure you have access to the spreadsheet."
-    );
+    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow();
+    expect(errSpy).not.toHaveBeenCalled();
 
     errSpy.mockRestore();
   });
 
-  it("logs a not-found message and re-throws on a 404", async () => {
-    const apiError: any = new Error("Missing");
-    apiError.code = 404;
+  it("throws a clear permission error preserving the original as cause on a 403", async () => {
+    const apiError = Object.assign(new Error("Forbidden"), { code: 403 });
     mockGet.mockRejectedValue(apiError);
-    const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
-      "Missing"
+      "Permission error: make sure you have access to the spreadsheet."
     );
-    expect(errSpy).toHaveBeenCalledWith(
+    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toMatchObject({
+      cause: apiError,
+    });
+  });
+
+  it("throws a clear not-found error on a 404", async () => {
+    const apiError = Object.assign(new Error("Missing"), { code: 404 });
+    mockGet.mockRejectedValue(apiError);
+
+    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
       "Spreadsheet not found. Check the spreadsheetId."
     );
+  });
 
-    errSpy.mockRestore();
+  it("falls back to the original message for an unknown error code", async () => {
+    const apiError = Object.assign(new Error("kaboom"), { code: 500 });
+    mockGet.mockRejectedValue(apiError);
+
+    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
+      "Error fetching data: kaboom"
+    );
   });
 });

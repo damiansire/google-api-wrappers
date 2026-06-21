@@ -113,8 +113,11 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
+  "include": ["src"],
   "exclude": [
     "**/*.spec.*", // Excluye todos los archivos de prueba
+    "**/*.test-d.ts", // Type-tests (tsd): no entran al build del paquete
+    "test-d", // Carpeta de type-tests (fuera de rootDir src)
     "jest.config.ts", // Excluye el archivo de configuración de Jest,
     "./dist",
     "test-helpers"

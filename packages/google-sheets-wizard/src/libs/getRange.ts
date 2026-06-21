@@ -41,28 +41,52 @@ async function getRange(
 
     return rows;
   } catch (error) {
-    handleError(error);
-    throw error; // Re-throw for higher-level handling
+    // A library must not pollute the consumer's stdout/stderr. Instead of
+    // logging, enrich the error with a clear, human-readable message and
+    // re-throw it so the caller decides how to surface or log it.
+    throw decorateError(error);
   }
 }
 
-function handleError(error: any) {
-  switch (error.code) {
+/** Shape of the error objects thrown by the `googleapis` Sheets client. */
+interface SheetsApiError {
+  code?: number;
+  message?: string;
+}
+
+function isSheetsApiError(error: unknown): error is SheetsApiError {
+  return typeof error === "object" && error !== null;
+}
+
+/**
+ * Maps a low-level Sheets API failure to a clearer `Error` without writing to
+ * the console. The original error is preserved as `cause`.
+ */
+function decorateError(error: unknown): Error {
+  const apiError: SheetsApiError = isSheetsApiError(error) ? error : {};
+  const message = apiError.message ?? String(error);
+
+  let friendly: string;
+  switch (apiError.code) {
     case 403:
-      console.error(
-        "Permission error: Make sure you have access to the spreadsheet."
-      );
+      friendly =
+        "Permission error: make sure you have access to the spreadsheet.";
       break;
-    case 404: // Not found
-      console.error("Spreadsheet not found. Check the spreadsheetId.");
+    case 404:
+      friendly = "Spreadsheet not found. Check the spreadsheetId.";
       break;
     default:
-      if (error.message.includes("No data found")) {
-        console.error("No data found in the specified range.");
-      } else {
-        console.error("Error fetching data:", error.message);
-      }
+      friendly = message.includes("No data found")
+        ? "No data found in the specified range."
+        : `Error fetching data: ${message}`;
   }
+
+  const decorated = new Error(friendly);
+  // Preserve the original error for callers that want to inspect it, without
+  // depending on the ES2022 `Error(message, { cause })` constructor overload
+  // (this package targets es2016).
+  (decorated as Error & { cause?: unknown }).cause = error;
+  return decorated;
 }
 
 module.exports = getRange;
