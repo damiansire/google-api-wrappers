@@ -3,17 +3,15 @@
 // Suite de comentarios: mockea makeRequest (la frontera de red) y ejercita el
 // stack completo dao -> controller -> client (youtubeClient) sin tocar la red.
 //
-// Parcheamos makeRequest sobre los dos adapters posibles para que el mock quede
-// activo sin importar desde cual modulo lo capture el DAO. Esta suite codifica
-// el contrato CORRECTO del path de comentarios; si los imports del DAO estan mal
-// cableados, estos tests lo detectan (que es justo el objetivo de tener red de
-// seguridad).
+// El mock se captura porque commentsDao desestructura `makeRequest` desde
+// '../adapters/youtubeApi' en tiempo de require; por eso parcheamos ese export
+// ANTES de requerir las capas bajo prueba. (commentsAdapter no exporta
+// makeRequest, asi que no hay nada que parchear ahi.)
 
 const test = require('node:test');
 const assert = require('node:assert');
 
 const youtubeApi = require('../adapters/youtubeApi');
-const commentsAdapter = require('../adapters/commentsAdapter');
 
 let pending = [];
 const requestedUrls = [];
@@ -27,7 +25,6 @@ function mockMakeRequest(url) {
 }
 
 youtubeApi.makeRequest = mockMakeRequest;
-commentsAdapter.makeRequest = mockMakeRequest;
 
 function setResponses(...responses) {
   pending = responses;
@@ -66,11 +63,15 @@ test('controller: getPaginatedComments mapea los comentarios y propaga el token'
   assert.ok(requestedUrls[0].includes('KEY'), 'la URL debe incluir la apiKey');
 });
 
-test('controller: getNextCommentsPage mapea la pagina siguiente', async () => {
+test('controller: getNextCommentsPage mapea la pagina siguiente y manda maxResults/pageToken en la URL', async () => {
   setResponses(commentsResponse([{ id: 'c2', text: 'chau', author: 'beto' }], undefined));
   const res = await commentsController.getNextCommentsPage('KEY', 'VID', 'TOKEN_2', 20);
   assert.strictEqual(res.nextPageToken, undefined);
   assert.deepStrictEqual(res.comments, [comment('c2', 'chau', 'beto')]);
+  // Guarda contra invertir el orden de (token, size): la URL debe llevar el
+  // size numerico en maxResults y el token en pageToken.
+  assert.ok(requestedUrls[0].includes('maxResults=20'), 'maxResults debe ser el size numerico');
+  assert.ok(requestedUrls[0].includes('pageToken=TOKEN_2'), 'pageToken debe ser el token');
 });
 
 test('controller: getAllComments pagina hasta agotar el token y concatena', async () => {
