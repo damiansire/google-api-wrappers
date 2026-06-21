@@ -1,6 +1,6 @@
 const { getAllComments, getPaginatedComments, getNextCommentsPage } = require('./controllers/commentsController');
 
-const { getAllVideosByChannelId, getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage } = require('./controllers/videoController')
+const { getAllVideosByChannelId, getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos } = require('./controllers/videoController')
 
 function youtubeClient(apiKey) {
     this.apiKey = apiKey;
@@ -61,6 +61,27 @@ youtubeClient.prototype.getNextVideosPage = async function (pageSize) {
     const videosData = await getNextVideosPage(this.apiKey, this.channelId, size, this.nextVideosPageToken)
     this.nextVideosPageToken = videosData.nextPageToken;
     return videosData.allVideosId;
+};
+
+// Metadata (titulo/descripcion/tags/estadisticas) de varios videos por id.
+// Parte internamente en chunks de 50 (limite de videos.list).
+youtubeClient.prototype.getVideosMetadata = async function (videoIds) {
+    if (!Array.isArray(videoIds)) throw new TypeError('expected an array of videoId strings');
+    return getVideosMetadata(this.apiKey, videoIds);
+};
+
+// Metadata de un solo video; devuelve null si la API no lo encontro.
+youtubeClient.prototype.getVideoMetadata = async function (videoId) {
+    if (typeof videoId !== 'string') throw new TypeError('expected a videoId string parameter');
+    const [meta] = await getVideosMetadata(this.apiKey, [videoId]);
+    return meta ?? null;
+};
+
+// Busqueda por termino (descubrimiento/trending). Cara: 100 unidades por
+// pagina, por eso options.maxPages (default 1) es el tope de costo.
+youtubeClient.prototype.searchVideos = async function (query, options) {
+    if (typeof query !== 'string') throw new TypeError('expected a query string parameter');
+    return searchVideos(this.apiKey, query, options);
 };
 
 module.exports = youtubeClient;

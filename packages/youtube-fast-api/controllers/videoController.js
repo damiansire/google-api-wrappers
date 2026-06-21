@@ -28,4 +28,33 @@ async function getNextVideosPage(apiKey, channelId, pageSize, token) {
     return videosDao.getNextVideosPage(apiKey, channelId, pageSize, token)
 }
 
-module.exports = { getAllVideosByChannelId, getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage };
+// videos.list acepta hasta 50 ids por request (1 unidad c/u): se parte en
+// chunks de 50 y se concatenan los resultados.
+async function getVideosMetadata(apiKey, videoIds) {
+    const chunkSize = 50;
+    let all = [];
+    for (let i = 0; i < videoIds.length; i += chunkSize) {
+        const chunk = videoIds.slice(i, i + chunkSize);
+        const metadata = await videosDao.getVideosMetadata(apiKey, chunk);
+        all = all.concat(metadata);
+    }
+    return all;
+}
+
+// search.list cuesta 100 unidades por pagina: `maxPages` es el tope de costo.
+async function searchVideos(apiKey, query, options = {}) {
+    const { maxPages = 1, order = 'relevance', pageSize = 50 } = options;
+    let hits = [];
+    let pageToken = '';
+    let pages = 0;
+    while (pages < maxPages) {
+        const page = await videosDao.searchVideosPage(apiKey, query, order, pageSize, pageToken);
+        hits = hits.concat(page.hits);
+        pages += 1;
+        if (!page.nextPageToken || pages >= maxPages) break;
+        pageToken = page.nextPageToken;
+    }
+    return hits;
+}
+
+module.exports = { getAllVideosByChannelId, getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos };
