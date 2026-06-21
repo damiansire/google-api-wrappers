@@ -16,8 +16,14 @@ async function getAllVideosByChannelId(apiKey, channelId) {
 
 
 async function getAllPlaylistByChannelId(apiKey, channelId) {
-    const channelData = await videosDao.getPlaylistByChannelId(apiKey, channelId);
-    return channelData;
+    let allVideosId = [];
+    let pageToken = '';
+    do {
+        const channelData = await videosDao.getPlaylistByChannelId(apiKey, channelId, pageToken);
+        allVideosId = allVideosId.concat(channelData.allVideosId);
+        pageToken = channelData.nextPageToken;
+    } while (pageToken);
+    return { allVideosId };
 }
 
 async function getPaginatedVideosByChannelId(apiKey, channelId, pageSize) {

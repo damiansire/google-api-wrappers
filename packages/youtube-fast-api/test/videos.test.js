@@ -41,10 +41,12 @@ function searchResponse(videoIds, nextPageToken) {
   };
 }
 
+// Respuesta cruda del endpoint youtube/v3/playlists (id de playlist directo en
+// item.id, NO item.id.playlistId como search.list).
 function playlistResponse(playlistIds, nextPageToken) {
   return {
     nextPageToken,
-    items: playlistIds.map((id) => ({ id: { playlistId: id } })),
+    items: playlistIds.map((id) => ({ id })),
   };
 }
 
@@ -83,10 +85,29 @@ test('controller: getAllVideosByChannelId pagina hasta agotar el token y dedupli
   assert.strictEqual(requestedUrls.length, 2, 'debe hacer exactamente 2 requests');
 });
 
-test('controller: getAllPlaylistByChannelId mapea ids de playlist', async () => {
-  setResponses(playlistResponse(['p1', 'p2'], undefined));
+test('controller: getAllPlaylistByChannelId usa el endpoint playlists con maxResults y pagina hasta agotar el token', async () => {
+  setResponses(
+    playlistResponse(['p1', 'p2'], 'TOKEN_2'),
+    playlistResponse(['p3'], undefined),
+  );
   const res = await videoController.getAllPlaylistByChannelId('KEY', 'CHAN');
-  assert.deepStrictEqual(res.allVideosId, ['p1', 'p2']);
+  assert.deepStrictEqual(res.allVideosId, ['p1', 'p2', 'p3']);
+  assert.strictEqual(requestedUrls.length, 2, 'debe paginar: una request por pagina');
+  // Debe pegarle a playlists.list (no a search.list) con maxResults y propagar el token.
+  assert.ok(requestedUrls[0].includes('/playlists?'), 'debe usar el endpoint playlists, no search');
+  assert.ok(requestedUrls[0].includes('channelId=CHAN'), 'la URL debe incluir el channelId');
+  assert.ok(requestedUrls[0].includes('maxResults=50'), 'la URL debe pedir maxResults');
+  assert.ok(requestedUrls[1].includes('pageToken=TOKEN_2'), 'la segunda pagina debe propagar el nextPageToken');
+});
+
+test('client: getPlaylist devuelve los ids de playlist deduplicados a traves de todas las paginas', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses(
+    playlistResponse(['p1', 'p2'], 'TOKEN_2'),
+    playlistResponse(['p2', 'p3'], undefined), // p2 repetido -> debe deduplicarse
+  );
+  const playlists = await client.getPlaylist('CHAN');
+  assert.deepStrictEqual(playlists, ['p1', 'p2', 'p3']);
 });
 
 test('client: getPaginatedChannelVideos guarda el token y getNextVideosPage lo consume', async () => {
