@@ -68,11 +68,15 @@ test('controller: getPaginatedVideosByChannelId descarta items sin videoId', asy
   assert.deepStrictEqual(res.allVideosId, ['v1', 'v3']);
 });
 
-test('controller: getNextVideosPage mapea la pagina siguiente', async () => {
+test('controller: getNextVideosPage mapea la pagina siguiente y manda maxResults/pageToken en la URL', async () => {
   setResponses(searchResponse(['v4', 'v5'], undefined));
   const res = await videoController.getNextVideosPage('KEY', 'CHAN', 50, 'TOKEN_2');
   assert.deepStrictEqual(res.allVideosId, ['v4', 'v5']);
   assert.strictEqual(res.nextPageToken, undefined);
+  // Guarda contra invertir (size, token): maxResults debe ser el size numerico
+  // y pageToken el token. Aqui vivio getnextvideospage-args-swap.
+  assert.ok(requestedUrls[0].includes('maxResults=50'), 'maxResults debe ser el size numerico');
+  assert.ok(requestedUrls[0].includes('pageToken=TOKEN_2'), 'pageToken debe ser el token');
 });
 
 test('controller: getAllVideosByChannelId pagina hasta agotar el token y deduplica', async () => {
