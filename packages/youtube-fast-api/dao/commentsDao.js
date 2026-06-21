@@ -1,8 +1,8 @@
-const { makeRequest } = require("../adapters/commentsAdapter");
-const { getVideoCommentsUrl, GetSpecificCommentAmountUrl, getNextPageTokenUrl } = require("../adapters/youtubeApi")
+const { makeRequest } = require("../adapters/youtubeApi");
+const { getVideoCommentsUrl, getSpecificCommentAmountUrl, getNextPageTokenUrl } = require("../adapters/commentsAdapter")
 
 async function getComments(apiKey, videoId, commentAmount) {
-    let threadsUrl = commentAmount ? GetSpecificCommentAmountUrl(apiKey, videoId, commentAmount) : getVideoCommentsUrl(apiKey, videoId);
+    let threadsUrl = commentAmount ? getSpecificCommentAmountUrl(apiKey, videoId, commentAmount) : getVideoCommentsUrl(apiKey, videoId);
     let commentsResponse = await makeRequest(threadsUrl);
     let commentsData = responseToComments(commentsResponse);
     return { nextPageToken: commentsResponse.nextPageToken, comments: commentsData };
