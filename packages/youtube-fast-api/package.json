@@ -21,9 +21,9 @@
     "directory": "packages/youtube-fast-api"
   },
   "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.24.2"
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.0"
   },
   "scripts": {
     "test": "node --test"
@@ -38,7 +38,7 @@
     "comments",
     "extract"
   ],
-  "author": "Damian Sire <damiansirecontacto@gmail.com> (https://damiansire.com)",
+  "author": "Damian Sire <damiansire@gmail.com> (https://damiansire.com)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/damiansire/google-api-wrappers/issues"
