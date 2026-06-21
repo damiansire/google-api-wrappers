@@ -92,10 +92,11 @@ describe("getRange lib — error decoration", () => {
   });
 
   it("does not write to the console on failure (library must stay quiet)", async () => {
-    const apiError: { code: number; message: string } = Object.assign(
-      new Error("Forbidden"),
-      { code: 403 }
-    );
+    // Gaxios-shaped error: HTTP status in `status` (number); `code` is a string.
+    const apiError = Object.assign(new Error("Forbidden"), {
+      status: 403,
+      code: "ERR_BAD_REQUEST",
+    });
     mockGet.mockRejectedValue(apiError);
     const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -105,8 +106,8 @@ describe("getRange lib — error decoration", () => {
     errSpy.mockRestore();
   });
 
-  it("throws a clear permission error preserving the original as cause on a 403", async () => {
-    const apiError = Object.assign(new Error("Forbidden"), { code: 403 });
+  it("throws a clear permission error preserving the original as cause on a 403 (status)", async () => {
+    const apiError = Object.assign(new Error("Forbidden"), { status: 403 });
     mockGet.mockRejectedValue(apiError);
 
     await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
@@ -117,8 +118,34 @@ describe("getRange lib — error decoration", () => {
     });
   });
 
+  it("reads the status from response.status when the top-level status is absent", async () => {
+    // Older/alternate Gaxios shapes expose the HTTP status only on response.
+    const apiError = Object.assign(new Error("Forbidden"), {
+      code: "ERR_BAD_REQUEST",
+      response: { status: 403 },
+    });
+    mockGet.mockRejectedValue(apiError);
+
+    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
+      "Permission error: make sure you have access to the spreadsheet."
+    );
+  });
+
+  it("does NOT treat a string Gaxios `code` as an HTTP status", async () => {
+    // Regression guard: reading the status from `code` (a string in Gaxios)
+    // would silently miss 403/404. A string code must fall through to default.
+    const apiError = Object.assign(new Error("Forbidden"), {
+      code: "ERR_BAD_REQUEST",
+    });
+    mockGet.mockRejectedValue(apiError);
+
+    await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
+      "Error fetching data: Forbidden"
+    );
+  });
+
   it("throws a clear not-found error on a 404", async () => {
-    const apiError = Object.assign(new Error("Missing"), { code: 404 });
+    const apiError = Object.assign(new Error("Missing"), { status: 404 });
     mockGet.mockRejectedValue(apiError);
 
     await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
@@ -126,8 +153,8 @@ describe("getRange lib — error decoration", () => {
     );
   });
 
-  it("falls back to the original message for an unknown error code", async () => {
-    const apiError = Object.assign(new Error("kaboom"), { code: 500 });
+  it("falls back to the original message for an unknown error status", async () => {
+    const apiError = Object.assign(new Error("kaboom"), { status: 500 });
     mockGet.mockRejectedValue(apiError);
 
     await expect(getRange("auth", "sheet-id", "A1:B2")).rejects.toThrow(
