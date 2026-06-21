@@ -100,23 +100,23 @@ La misma recibe como parámetro la cantidad de comentarios que quieres traer.
 <br>
 
 
-## Función getNextCommentsPage
+## Función getAllVideos
 
 
 ```
-getAllVideosByChannelId(channelId) 
+getAllVideos(channelId) 
 ```
-Cuando aplicas la función **getAllVideosByChannelId**, devuelve todos los id de todos los videos de ese canal. 
+Cuando aplicas la función **getAllVideos**, devuelve todos los id de todos los videos de ese canal. 
 
 <br>
 
-## Función getPlaylistByChannelId
+## Función getPlaylist
 
 
 ```
-getPlaylistByChannelId(channelId) 
+getPlaylist(channelId) 
 ```
-Cuando aplicas la función **getPlaylistByChannelId**, devuelve todos los id, de las listas de reproducción de ese canal.
+Cuando aplicas la función **getPlaylist**, devuelve todos los id, de las listas de reproducción de ese canal.
 
 <br>
 
