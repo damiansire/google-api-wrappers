@@ -48,14 +48,26 @@ async function getRange(
   }
 }
 
-/** Shape of the error objects thrown by the `googleapis` Sheets client. */
+/**
+ * Shape of the error objects thrown by the `googleapis` Sheets client (Gaxios).
+ *
+ * The HTTP status lives in `status` (a number) or `response.status`. Note that
+ * Gaxios' `code` is a *string* (e.g. `"ERR_BAD_REQUEST"`), NOT the HTTP status —
+ * reading the status from `code` silently misses every 403/404 in production.
+ */
 interface SheetsApiError {
-  code?: number;
+  status?: number;
+  response?: { status?: number };
   message?: string;
 }
 
 function isSheetsApiError(error: unknown): error is SheetsApiError {
   return typeof error === "object" && error !== null;
+}
+
+/** Extracts the HTTP status code from a Gaxios-style error, if present. */
+function httpStatusOf(error: SheetsApiError): number | undefined {
+  return error.status ?? error.response?.status;
 }
 
 /**
@@ -67,7 +79,7 @@ function decorateError(error: unknown): Error {
   const message = apiError.message ?? String(error);
 
   let friendly: string;
-  switch (apiError.code) {
+  switch (httpStatusOf(apiError)) {
     case 403:
       friendly =
         "Permission error: make sure you have access to the spreadsheet.";
