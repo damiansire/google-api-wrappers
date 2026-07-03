@@ -38,22 +38,18 @@ describe("GoogleSheetsWizard.getRange", () => {
     expect(result).toEqual([["a", "b"], ["c", "d"]]);
   });
 
-  it("throws when the range returns an empty array", async () => {
+  it("returns an empty list when the range returns an empty array", async () => {
     mockGet.mockResolvedValue({ data: { values: [] } });
 
     const wizard = new GoogleSheetsWizard("auth-token", "sheet-id");
-    await expect(wizard.getRange("A1:B2")).rejects.toThrow(
-      "No data found in the specified range."
-    );
+    await expect(wizard.getRange("A1:B2")).resolves.toEqual([]);
   });
 
-  it("throws when the API response has no values field", async () => {
+  it("returns an empty list when the API response has no values field", async () => {
     mockGet.mockResolvedValue({ data: {} });
 
     const wizard = new GoogleSheetsWizard("auth-token", "sheet-id");
-    await expect(wizard.getRange("A1:B2")).rejects.toThrow(
-      "No data found in the specified range."
-    );
+    await expect(wizard.getRange("A1:B2")).resolves.toEqual([]);
   });
 });
 

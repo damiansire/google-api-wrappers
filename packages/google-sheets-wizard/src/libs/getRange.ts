@@ -26,8 +26,12 @@ async function getRange(
 
     const rows = res.data.values as Row[] | undefined;
     if (!rows || rows.length === 0) {
-      // Throw a specific error instead of just logging it
-      throw new Error("No data found in the specified range.");
+      // Un rango vacío (hoja/columna vacía, filtro sin resultados) es un
+      // resultado NORMAL de negocio, no un fallo: devolvemos lista vacía y
+      // reservamos las excepciones para errores reales de la API. Obligar al
+      // consumidor a try/catch + string-matching de "No data found" para
+      // distinguir "vacío" de "roto" es hostil.
+      return [];
     }
 
     if (objectKeys) {
@@ -88,9 +92,9 @@ function decorateError(error: unknown): Error {
       friendly = "Spreadsheet not found. Check the spreadsheetId.";
       break;
     default:
-      friendly = message.includes("No data found")
-        ? "No data found in the specified range."
-        : `Error fetching data: ${message}`;
+      // (El caso "No data found" ya no existe: rango vacío devuelve [] en vez
+      // de lanzar — ver getRange.)
+      friendly = `Error fetching data: ${message}`;
   }
 
   const decorated = new Error(friendly);
