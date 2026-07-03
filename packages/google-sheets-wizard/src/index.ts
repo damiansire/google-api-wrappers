@@ -31,12 +31,30 @@ class GoogleSheetsWizard {
   /**
    * Fetches data from the specified range in the Google Sheet.
    *
+   * An empty range (empty sheet/column, a filter with no hits) resolves to `[]`
+   * — it is a normal result, not an error.
+   *
    * @param range The range of cells to fetch (e.g., "A1:B5").
    * @param objectKeys Optional keys to map each row into an object. When
    *   provided, every row is converted into an object using these keys in
    *   order; otherwise the raw 2D array of rows is returned.
    * @returns A promise that resolves to the fetched data: a 2D array of rows,
    *   or an array of objects when `objectKeys` is supplied.
+   * @throws {Error} If the API call fails. The message is human-readable
+   *   ("Permission error…" for 403, "Spreadsheet not found…" for 404) and the
+   *   original Gaxios error is preserved on the `cause` property.
+   * @example
+   * ```ts
+   * const wizard = new GoogleSheetsWizard(auth, spreadsheetId);
+   *
+   * // Raw rows:
+   * const rows = await wizard.getRange("Sheet1!A1:B2");
+   * // => [["Ada", "Lovelace"], ["Alan", "Turing"]]
+   *
+   * // Mapped to objects with the given keys:
+   * const people = await wizard.getRange("Sheet1!A1:B2", ["first", "last"]);
+   * // => [{ first: "Ada", last: "Lovelace" }, { first: "Alan", last: "Turing" }]
+   * ```
    */
   getRange(
     range: string,
