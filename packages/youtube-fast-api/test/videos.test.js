@@ -33,6 +33,18 @@ function setResponses(...responses) {
 const videoController = require('../controllers/videoController');
 const YoutubeClient = require('../index');
 
+const videoAdapter = require('../adapters/videoAdapter');
+
+// Guard anti-inyección: borrar el encodeURIComponent de los builders debe romper
+// este test (antes el control de seguridad estrella no tenía cobertura).
+test('adapter: escapa los valores interpolados en la URL (anti-inyección de parámetros)', () => {
+  const url = videoAdapter.getVideosByChannelIdUrl('KEY', 'abc&key=ATTACKER');
+  assert.ok(url.includes('channelId=abc%26key%3DATTACKER'), 'channelId con & y = debe ir escapado');
+  assert.ok(!url.includes('channelId=abc&key=ATTACKER'), 'no debe filtrarse crudo (contaminaría el key)');
+  const meta = videoAdapter.getVideosMetadataUrl('KEY', ['a#1', 'b&2']);
+  assert.ok(meta.includes('id=a%231,b%262'), 'cada id se escapa; la coma separadora NO');
+});
+
 // Respuesta cruda del endpoint youtube/v3/search (id.videoId por item).
 function searchResponse(videoIds, nextPageToken) {
   return {
