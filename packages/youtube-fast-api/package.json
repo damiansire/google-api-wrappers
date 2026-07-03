@@ -49,5 +49,8 @@
   "bugs": {
     "url": "https://github.com/damiansire/google-api-wrappers/issues"
   },
-  "type": "commonjs"
+  "type": "commonjs",
+  "publishConfig": {
+    "provenance": true
+  }
 }
