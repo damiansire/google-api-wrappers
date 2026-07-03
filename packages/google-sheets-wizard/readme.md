@@ -188,3 +188,9 @@ Fetches data from a specific range.
 ## Contributing
 
 Contributions are welcome! If you have suggestions or find any issues, please feel free to open an issue or submit a pull request.
+
+## Compatibilidad
+
+- **Runtime:** Node.js **≥ 14** (mismo piso que `googleapis`; salida CommonJS, target ES2016).
+- **TypeScript:** tipos verificados en CI (`publint` + `arethetypeswrong`) para `node10`,
+  `node16` (CJS/ESM) y bundlers. `require('google-sheets-wizard')` devuelve la clase directo.
