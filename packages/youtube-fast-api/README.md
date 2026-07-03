@@ -69,33 +69,32 @@ Dado el ID de un video, esta función te devuelve todos los comentarios que hay 
 
 <br>
 
-## Función getPaginatedComments 
+## Paginar comentarios: `comments` / `commentsPages`
 
+Cuando un video tiene muchos comentarios, en vez de traerlos todos de golpe podés
+recorrerlos de a páginas con un **async-iterator sin estado** (podés paginar dos
+videos a la vez con el mismo cliente, y termina solo cuando no hay más).
+
+```js
+// comentario por comentario:
+for await (const comment of ytClient.comments(videoId, { pageSize: 100 })) {
+    console.log(comment.textDisplay);
+}
+
+// o página por página (cada valor es un array de comentarios):
+for await (const page of ytClient.commentsPages(videoId)) {
+    console.log(`${page.length} comentarios en esta página`);
+}
 ```
-getPaginatedComments( videoId, paginatedSize )
-```
 
-Dado el Id de un video y el tamaño del paginado, te devuelve los comentarios de a pedazos. 
+Lo mismo para los videos de un canal: `channelVideos(channelId)` /
+`channelVideoPages(channelId)`.
 
-Cuando el video tiene muchos comentarios se hace difícil y pesado manejar tantos datos. 
-
-Este método es ideal para esos casos, te permite obtener los comentarios de a poco. 
-
-Por ejemplo, si paginatedSize es 10 y el video tiene 50 comentarios. Te retornara los primeros 10 y un token para obtener los comentarios siguientes, con la función **getNextCommentsPage**.
-
-<br>
-
-## Función getNextCommentsPage
-
-
-```
-getNextCommentsPage(paginatedSize) 
-```
-Cuando aplicas la función **getPaginatedComments**, devuelve los comentarios de a pedazos. 
-
-Entonces, necesitas ir a buscar los siguientes, estos se hace con la función **getNextCommentsPage**.
-
-La misma recibe como parámetro la cantidad de comentarios que quieres traer.
+> **Deprecado:** `getPaginatedComments(videoId, pageSize)` +
+> `getNextCommentsPage(pageSize)` (y su par para videos de canal) guardan el cursor
+> en la instancia del cliente, así que no podés paginar dos recursos a la vez. Siguen
+> funcionando por compatibilidad pero se removerán en la próxima major: usá los
+> paginadores de arriba.
 
 
 <br>
@@ -192,26 +191,17 @@ videoComments.then(videoData => {
 
 ## Ejemplo de paginado
 
-```
+```js
 const youtubeClient = require("youtube-fast-api")
 
 const ytClient = new youtubeClient(tuApiKey);
 
-const videoId = "PaRam-aY9p0"; //Aca el id del video
+const videoId = "PaRam-aY9p0"; // Acá el id del video
 
 (async () => {
-
-    const firstPage = await ytClient.
-    //Trae los primeros 20 comentarios
-    getPaginatedComments(videoId, 20);
-
-    console.log(firstPage)
-
-    //Trae los siguientes 20 comentarios
-    const nextPageResult = await ytClient.getNextCommentsPage(20)
-
-    console.log(nextPageResult)
-
+    // Recorre TODAS las páginas de a 20, sin cargar todo en memoria de golpe.
+    for await (const page of ytClient.commentsPages(videoId, { pageSize: 20 })) {
+        console.log(page); // array de comentarios de esta página
+    }
 })();
-
 ```
