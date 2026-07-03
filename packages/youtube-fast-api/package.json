@@ -4,6 +4,13 @@
   "description": "A youtube api for easier data management",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "sideEffects": false,
   "engines": {
     "node": ">=14.0.0"
