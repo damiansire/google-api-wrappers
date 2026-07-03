@@ -112,6 +112,42 @@ test('client: getAllComments delega en el controller', async () => {
   assert.deepStrictEqual(all, [comment('c1', 'uno', 'ana'), comment('c2', 'dos', 'beto')]);
 });
 
+test('client: comments() itera todos los comentarios via el paginador stateless', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses(
+    commentsResponse([{ id: 'c1', text: 'uno', author: 'ana' }], 'TOKEN_2'),
+    commentsResponse([{ id: 'c2', text: 'dos', author: 'beto' }], undefined),
+  );
+  const collected = [];
+  for await (const c of client.comments('VID', { pageSize: 100 })) collected.push(c);
+  assert.deepStrictEqual(collected, [comment('c1', 'uno', 'ana'), comment('c2', 'dos', 'beto')]);
+  // La propiedad clave del paginador stateless: NO toca el estado de la instancia
+  // (a diferencia de getPaginatedComments). Por eso dos iteraciones no se pisan.
+  assert.strictEqual(client.nextCommentsPageToken, '', 'el iterador no debe mutar el cursor de la instancia');
+  assert.strictEqual(client.videoId, '', 'el iterador no debe mutar el videoId de la instancia');
+});
+
+test('client: commentsPages() entrega un array por pagina', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses(
+    commentsResponse([{ id: 'c1', text: 'uno', author: 'ana' }], 'TOKEN_2'),
+    commentsResponse([{ id: 'c2', text: 'dos', author: 'beto' }], undefined),
+  );
+  const pages = [];
+  for await (const page of client.commentsPages('VID')) pages.push(page);
+  assert.strictEqual(pages.length, 2, 'dos paginas');
+  assert.deepStrictEqual(pages[0], [comment('c1', 'uno', 'ana')]);
+  assert.deepStrictEqual(pages[1], [comment('c2', 'dos', 'beto')]);
+});
+
+test('client: comments() rechaza un videoId invalido al empezar a iterar', async () => {
+  const client = new YoutubeClient('KEY');
+  await assert.rejects(async () => {
+    // eslint-disable-next-line no-unused-vars
+    for await (const _ of client.comments(123)) break;
+  }, TypeError);
+});
+
 test('client: getPaginatedComments rechaza un videoId numerico', async () => {
   const client = new YoutubeClient('KEY');
   await assert.rejects(() => client.getPaginatedComments(123), TypeError);

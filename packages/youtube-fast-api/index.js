@@ -1,6 +1,6 @@
-const { getAllComments, getPaginatedComments, getNextCommentsPage } = require('./controllers/commentsController');
+const { getPaginatedComments, getNextCommentsPage } = require('./controllers/commentsController');
 
-const { getAllVideosByChannelId, getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos } = require('./controllers/videoController')
+const { getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos } = require('./controllers/videoController')
 
 function youtubeClient(apiKey) {
     this.apiKey = apiKey;
@@ -22,11 +22,64 @@ function assertId(value, name) {
     }
 }
 
-youtubeClient.prototype.getAllComments = async function (videoId) {
+// --- Paginadores canonicos (stateless, recomendados) ------------------------
+// Async-iterators: no guardan cursor en la instancia, asi que dos paginaciones
+// pueden correr a la vez sin pisarse, terminan solas cuando no hay nextPageToken
+// y son testeables en aislamiento. Son la unica implementacion del "traer paginas":
+// getAll* de abajo las reusan (antes cada uno recopiaba el loop de paginacion).
+
+// Paginas de comentarios de un video: cada `yield` es un array de comentarios.
+youtubeClient.prototype.commentsPages = async function* (videoId, { pageSize = 100 } = {}) {
     assertId(videoId, 'videoId');
-    return getAllComments(this.apiKey, videoId);
+    let data = await getPaginatedComments(this.apiKey, videoId, pageSize);
+    yield data.comments;
+    while (data.nextPageToken) {
+        data = await getNextCommentsPage(this.apiKey, videoId, data.nextPageToken, pageSize);
+        yield data.comments;
+    }
 };
 
+// Comentarios uno por uno (aplana las paginas).
+youtubeClient.prototype.comments = async function* (videoId, options) {
+    for await (const page of this.commentsPages(videoId, options)) {
+        yield* page;
+    }
+};
+
+// Paginas de ids de video de un canal: cada `yield` es un array de videoIds.
+youtubeClient.prototype.channelVideoPages = async function* (channelId, { pageSize = 50 } = {}) {
+    assertId(channelId, 'channelId');
+    let data = await getPaginatedVideosByChannelId(this.apiKey, channelId, pageSize);
+    yield data.allVideosId;
+    while (data.nextPageToken) {
+        data = await getNextVideosPage(this.apiKey, channelId, pageSize, data.nextPageToken);
+        yield data.allVideosId;
+    }
+};
+
+// Ids de video de un canal uno por uno.
+youtubeClient.prototype.channelVideos = async function* (channelId, options) {
+    for await (const page of this.channelVideoPages(channelId, options)) {
+        yield* page;
+    }
+};
+
+// --- Conveniencias "traer todo" (reusan los paginadores canonicos) ----------
+
+youtubeClient.prototype.getAllComments = async function (videoId) {
+    const all = [];
+    for await (const page of this.commentsPages(videoId, { pageSize: 100 })) {
+        all.push(...page);
+    }
+    return all;
+};
+
+/**
+ * @deprecated Usa el paginador stateless `commentsPages(videoId)` /
+ * `comments(videoId)`. Este metodo guarda el cursor en la instancia, asi que no
+ * podes paginar dos videos a la vez con el mismo cliente. Se mantiene por
+ * compatibilidad; sera removido en la proxima major.
+ */
 youtubeClient.prototype.getPaginatedComments = async function (videoId, pageSize) {
     assertId(videoId, 'videoId');
     const commentsData = await getPaginatedComments(this.apiKey, videoId, pageSize);
@@ -36,6 +89,7 @@ youtubeClient.prototype.getPaginatedComments = async function (videoId, pageSize
     return commentsData.comments;
 };
 
+/** @deprecated Ver `commentsPages` / `comments`. */
 youtubeClient.prototype.getNextCommentsPage = async function (pageSize) {
     if (!this.nextCommentsPageToken) return [];
     const size = pageSize ?? this.commentsPageSize;
@@ -45,8 +99,11 @@ youtubeClient.prototype.getNextCommentsPage = async function (pageSize) {
 };
 
 youtubeClient.prototype.getAllVideos = async function (channelId) {
-    assertId(channelId, 'channelId');
-    return getAllVideosByChannelId(this.apiKey, channelId);
+    const seen = new Set();
+    for await (const page of this.channelVideoPages(channelId, { pageSize: 50 })) {
+        for (const id of page) seen.add(id);
+    }
+    return [...seen];
 };
 
 youtubeClient.prototype.getPlaylist = async function (channelId) {
@@ -55,7 +112,11 @@ youtubeClient.prototype.getPlaylist = async function (channelId) {
     return [...new Set(channelData.allVideosId)];
 };
 
-//Max 50
+/**
+ * @deprecated Usa el paginador stateless `channelVideoPages(channelId)` /
+ * `channelVideos(channelId)`. Este metodo guarda el cursor en la instancia. Se
+ * mantiene por compatibilidad; sera removido en la proxima major.
+ */
 youtubeClient.prototype.getPaginatedChannelVideos = async function (channelId, pageSize = 50) {
     assertId(channelId, 'channelId');
     const videosData = await getPaginatedVideosByChannelId(this.apiKey, channelId, pageSize);
@@ -65,7 +126,7 @@ youtubeClient.prototype.getPaginatedChannelVideos = async function (channelId, p
     return videosData.allVideosId;
 }
 
-//Max 50
+/** @deprecated Ver `channelVideoPages` / `channelVideos`. */
 youtubeClient.prototype.getNextVideosPage = async function (pageSize) {
     if (!this.nextVideosPageToken) return [];
     const size = pageSize ?? this.videosPageSize;
