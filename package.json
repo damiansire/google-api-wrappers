@@ -9,6 +9,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
     "test:types": "npm run test:types --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "size": "size-limit"
   },
   "devDependencies": {

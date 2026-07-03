@@ -1,12 +1,6 @@
 import type { Common } from "googleapis";
+import getRange from "./libs/getRange";
 import type { Row, MappedRow } from "./libs/getRange";
-
-const getRange: (
-  auth: SheetsAuth,
-  spreadsheetId: string,
-  range: string,
-  objectKeys?: string[]
-) => Promise<Row[] | MappedRow[]> = require("./libs/getRange");
 
 /**
  * Credentials accepted by the Google Sheets API.

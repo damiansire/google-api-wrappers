@@ -26,7 +26,9 @@
     "eslint-plugin-import": "^2.29.0"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "prepublishOnly": "npm run lint"
   },
   "keywords": [
     "youtube fast api",
