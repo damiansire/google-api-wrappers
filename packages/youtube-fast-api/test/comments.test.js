@@ -139,6 +139,20 @@ test('client: commentsPages() entrega un array por pagina', async () => {
   assert.deepStrictEqual(pages[1], [comment('c2', 'dos', 'beto')]);
 });
 
+test('client: commentsPages valida y acota pageSize (max 100 de commentThreads)', async () => {
+  const client = new YoutubeClient('KEY');
+  // pageSize inválido -> TypeError al empezar a iterar (asimetría con searchVideos cerrada).
+  await assert.rejects(async () => {
+    // eslint-disable-next-line no-unused-vars
+    for await (const _ of client.commentsPages('v', { pageSize: 0 })) break;
+  }, /invalid pageSize/);
+  // pageSize > 100 -> se acota a 100 en la URL (evita el 400 de la API).
+  setResponses(commentsResponse([{ id: 'c1', text: 'x', author: 'a' }], undefined));
+  // eslint-disable-next-line no-unused-vars
+  for await (const _ of client.commentsPages('v', { pageSize: 500 })) break;
+  assert.ok(requestedUrls[0].includes('maxResults=100'), 'pageSize>100 se acota a 100');
+});
+
 test('client: comments() rechaza un videoId invalido al empezar a iterar', async () => {
   const client = new YoutubeClient('KEY');
   await assert.rejects(async () => {

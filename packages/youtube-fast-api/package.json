@@ -10,6 +10,7 @@
   },
   "files": [
     "index.js",
+    "pageSize.js",
     "index.d.ts",
     "adapters",
     "controllers",

@@ -1,4 +1,5 @@
 const videosDao = require('../dao/videosDao');
+const { normalizePageSize } = require('../pageSize');
 
 // (El "traer todos los videos de un canal" vive en el cliente como async-generator
 // canónico `channelVideoPages`; ya no se implementa el loop acá.)
@@ -70,11 +71,7 @@ async function searchVideos(apiKey, query, options = {}) {
     if (!SEARCH_ORDERS.includes(order)) {
         throw new TypeError(`invalid order "${order}"; expected one of: ${SEARCH_ORDERS.join(', ')}`);
     }
-    const n = Number(pageSize);
-    if (!Number.isFinite(n) || n < 1) {
-        throw new TypeError(`invalid pageSize "${pageSize}"; expected a number between 1 and 50`);
-    }
-    const clampedPageSize = Math.min(Math.trunc(n), 50); // > 50 se acota al tope de la API
+    const clampedPageSize = normalizePageSize(pageSize, 50); // search.list topea en 50
     const hits = [];
     let pageToken = '';
     let pages = 0;
