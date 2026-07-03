@@ -102,6 +102,15 @@ test('client: getPaginatedComments guarda el token y getNextCommentsPage lo cons
   assert.deepStrictEqual(empty, []);
 });
 
+test('client: getNextCommentsPage con pageSize explícito overridea el guardado en la instancia', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses(commentsResponse([{ id: 'c1', text: 'hola', author: 'ana' }], 'TOKEN_2'));
+  await client.getPaginatedComments('VID', 20); // guarda commentsPageSize=20
+  setResponses(commentsResponse([{ id: 'c2', text: 'chau', author: 'beto' }], undefined));
+  await client.getNextCommentsPage(5); // override explícito: la URL debe usar 5, no 20
+  assert.ok(requestedUrls[0].includes('maxResults=5'), 'el pageSize explícito debe overridear al de la instancia');
+});
+
 test('client: getAllComments delega en el controller', async () => {
   const client = new YoutubeClient('KEY');
   setResponses(
