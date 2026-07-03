@@ -16,7 +16,9 @@
   },
   "files": [
     "dist/**/*",
-    "!dist/**/*.map",
+    "!dist/**/*.js.map",
+    "src/**/*.ts",
+    "!src/**/*.spec.ts",
     "CHANGELOG.md"
   ],
   "scripts": {
