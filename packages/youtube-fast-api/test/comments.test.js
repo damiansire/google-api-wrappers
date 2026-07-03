@@ -74,16 +74,6 @@ test('controller: getNextCommentsPage mapea la pagina siguiente y manda maxResul
   assert.ok(requestedUrls[0].includes('pageToken=TOKEN_2'), 'pageToken debe ser el token');
 });
 
-test('controller: getAllComments pagina hasta agotar el token y concatena', async () => {
-  setResponses(
-    commentsResponse([{ id: 'c1', text: 'uno', author: 'ana' }], 'TOKEN_2'),
-    commentsResponse([{ id: 'c2', text: 'dos', author: 'beto' }], undefined),
-  );
-  const all = await commentsController.getAllComments('KEY', 'VID');
-  assert.deepStrictEqual(all, [comment('c1', 'uno', 'ana'), comment('c2', 'dos', 'beto')]);
-  assert.strictEqual(requestedUrls.length, 2, 'debe hacer exactamente 2 requests');
-});
-
 test('client: getPaginatedComments guarda el token y getNextCommentsPage lo consume', async () => {
   const client = new YoutubeClient('KEY');
 
@@ -111,7 +101,7 @@ test('client: getNextCommentsPage con pageSize explícito overridea el guardado 
   assert.ok(requestedUrls[0].includes('maxResults=5'), 'el pageSize explícito debe overridear al de la instancia');
 });
 
-test('client: getAllComments delega en el controller', async () => {
+test('client: getAllComments recorre todas las páginas (vía el async-generator canónico)', async () => {
   const client = new YoutubeClient('KEY');
   setResponses(
     commentsResponse([{ id: 'c1', text: 'uno', author: 'ana' }], 'TOKEN_2'),
