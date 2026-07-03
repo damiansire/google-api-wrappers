@@ -205,3 +205,10 @@ const videoId = "PaRam-aY9p0"; // Acá el id del video
     }
 })();
 ```
+## Compatibilidad
+
+- **Runtime:** Node.js **≥ 14** (código ES2016 + CommonJS; `require()` devuelve el cliente directo).
+- **TypeScript:** el paquete envía `index.d.ts`. Los tipos resuelven tanto en la resolución
+  de módulos vieja (`node10`) como en la nueva (`node16`, CJS y ESM) y en bundlers —
+  verificado en CI con `arethetypeswrong` sobre el tarball real.
+- **Dev/CI** requiere Node ≥ 18 (usa el test runner nativo `node --test`); eso no afecta al consumidor.
