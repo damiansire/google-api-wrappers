@@ -14,7 +14,8 @@
     "adapters",
     "controllers",
     "dao",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "homepage": "https://github.com/damiansire/google-api-wrappers/tree/main/packages/youtube-fast-api#readme",
   "repository": {
