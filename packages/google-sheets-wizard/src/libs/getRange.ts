@@ -1,6 +1,22 @@
 import { google } from "googleapis";
+import type { Common } from "googleapis";
 
-import type { SheetsAuth } from "../index";
+/**
+ * Credentials accepted by the Google Sheets API. Coincide con la union `auth` del
+ * cliente Sheets v4 de `googleapis`, así el consumidor obtiene autocompletado y
+ * errores en tiempo de compilación en vez de `any`.
+ *
+ * (Definido acá, donde se usa, para no crear un ciclo de imports con index.ts; index
+ * lo re-exporta como parte de la API pública.)
+ */
+export type SheetsAuth =
+  | string
+  | Common.OAuth2Client
+  | Common.JWT
+  | Common.Compute
+  | Common.UserRefreshClient
+  | Common.BaseExternalAccountClient
+  | Common.GoogleAuth;
 
 /**
  * A single cell value. Con el render por defecto de la API (FORMATTED_VALUE, que
