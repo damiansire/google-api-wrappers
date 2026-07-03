@@ -9,6 +9,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  id-token: write # provenance de npm (Sigstore/OIDC): el tarball queda atestiguado
 
 jobs:
   release:
