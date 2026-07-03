@@ -11,14 +11,21 @@ const assert = require('node:assert');
 const https = require('https');
 const { EventEmitter } = require('node:events');
 
-const { makeRequest } = require('../adapters/youtubeApi');
+const {
+  makeRequest,
+  YouTubeApiError,
+  RateLimitError,
+} = require('../adapters/youtubeApi');
 
 // Reemplaza https.get por un fake mientras corre `run` y lo restaura siempre.
 // `drive(req)` se ejecuta en el siguiente tick, cuando makeRequest ya registró
 // sus handlers ('error') y llamó a req.setTimeout.
+// makeRequest llama https.get(url, { agent }, cb): el fake acepta la firma real
+// (url[, options], cb) y toma el ultimo argumento como callback.
 function withHttpsGetStub(drive, run) {
   const original = https.get;
-  https.get = function fakeGet(url, onResponse) {
+  https.get = function fakeGet(url, optionsOrCb, maybeCb) {
+    const onResponse = typeof optionsOrCb === 'function' ? optionsOrCb : maybeCb;
     const req = new EventEmitter();
     req.requestedUrl = url;
     req.timeoutMs = null;
@@ -36,11 +43,21 @@ function withHttpsGetStub(drive, run) {
     req.respond = (statusCode, body) => {
       const res = new EventEmitter();
       res.statusCode = statusCode;
+      res.headers = {};
       onResponse(res);
       for (const chunk of Array.isArray(body) ? body : [body]) {
         res.emit('data', Buffer.from(chunk));
       }
       res.emit('end');
+    };
+    // Entrega la respuesta y luego emite 'error' sobre el stream `res` (corte a
+    // mitad de body): sirve para probar que makeRequest no queda colgado.
+    req.respondThenError = (statusCode, err) => {
+      const res = new EventEmitter();
+      res.statusCode = statusCode;
+      res.headers = {};
+      onResponse(res);
+      res.emit('error', err);
     };
     setImmediate(() => drive(req));
     return req;
@@ -72,14 +89,56 @@ test('makeRequest: 403 rechaza con el status y el body en el mensaje', () =>
       }),
   ));
 
-test('makeRequest: 500 tambien rechaza (el corte es statusCode >= 400)', () =>
+test('makeRequest: 500 se reintenta (5xx) y termina rechazando tras agotar los reintentos', () => {
+  let calls = 0;
+  return withHttpsGetStub(
+    (req) => { calls += 1; req.respond(500, 'internal error'); },
+    async () => {
+      await assert.rejects(
+        makeRequest('https://example.test/broken', { retryBaseMs: 0, maxRetries: 2 }),
+        /Request failed with status 500/,
+      );
+      assert.strictEqual(calls, 3, 'debe intentar 1 vez + 2 reintentos = 3 llamadas');
+    },
+  );
+});
+
+test('makeRequest: 429 se reintenta y un 200 posterior resuelve OK', () => {
+  let calls = 0;
+  return withHttpsGetStub(
+    (req) => {
+      calls += 1;
+      if (calls === 1) req.respond(429, '{"error":{"errors":[{"reason":"rateLimitExceeded"}]}}');
+      else req.respond(200, '{"ok":true}');
+    },
+    async () => {
+      const result = await makeRequest('https://example.test/limited', { retryBaseMs: 0 });
+      assert.deepStrictEqual(result, { ok: true });
+      assert.strictEqual(calls, 2, 'un reintento tras el 429');
+    },
+  );
+});
+
+test('makeRequest: un 429 que agota los reintentos rechaza con RateLimitError tipado', () =>
   withHttpsGetStub(
-    (req) => req.respond(500, 'internal error'),
+    (req) => req.respond(429, '{"error":{"errors":[{"reason":"rateLimitExceeded"}]}}'),
     () =>
       assert.rejects(
-        makeRequest('https://example.test/broken'),
-        /Request failed with status 500/,
+        makeRequest('https://example.test/limited', { retryBaseMs: 0, maxRetries: 1 }),
+        (err) => {
+          assert.ok(err instanceof RateLimitError, 'debe ser RateLimitError');
+          assert.ok(err instanceof YouTubeApiError, 'y de la jerarquia YouTubeApiError');
+          assert.strictEqual(err.status, 429);
+          assert.strictEqual(err.reason, 'rateLimitExceeded');
+          return true;
+        },
       ),
+  ));
+
+test('makeRequest: un error en el stream de respuesta (corte a mitad de body) rechaza y no cuelga', () =>
+  withHttpsGetStub(
+    (req) => req.respondThenError(200, new Error('socket hang up mid-body')),
+    () => assert.rejects(makeRequest('https://example.test/cut'), /socket hang up mid-body/),
   ));
 
 test('makeRequest: body no-JSON con status 200 rechaza con "Failed to parse"', () =>
