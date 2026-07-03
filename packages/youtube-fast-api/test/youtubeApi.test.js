@@ -213,6 +213,25 @@ test('makeRequest: 403 quotaExceeded (body estructurado real) -> QuotaExceededEr
   );
 });
 
+test('makeRequest: acota el Retry-After enorme al tope maximo (no cuelga la operacion)', () => {
+  let calls = 0;
+  return withHttpsGetStub(
+    (req) => {
+      calls += 1;
+      // Retry-After: 99999s -> sin cap la espera seria ~28h; con maxBackoffMs:5 es 5ms.
+      if (calls === 1) req.respond(429, '{"error":{"errors":[{"reason":"rateLimitExceeded"}]}}', { 'retry-after': '99999' });
+      else req.respond(200, '{"ok":true}');
+    },
+    async () => {
+      const started = process.hrtime.bigint();
+      const result = await makeRequest('https://example.test/limited', { retryBaseMs: 0, maxBackoffMs: 5 });
+      const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+      assert.deepStrictEqual(result, { ok: true });
+      assert.ok(elapsedMs < 1000, `la espera se acotó (tardó ${elapsedMs.toFixed(0)}ms, no las 28h del Retry-After)`);
+    },
+  );
+});
+
 test('makeRequest: honra el header Retry-After (segundos -> ms) en el error rechazado', () =>
   withHttpsGetStub(
     (req) => req.respond(429, '{"error":{"errors":[{"reason":"rateLimitExceeded"}]}}', { 'retry-after': '2' }),
