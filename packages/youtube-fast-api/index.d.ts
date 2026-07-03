@@ -59,19 +59,57 @@ declare namespace YoutubeClient {
         cause?: unknown;
     }
     /** 429 / rate-limit excedido. */
-    class RateLimitError extends YouTubeApiError {}
+    class RateLimitError extends YouTubeApiError {
+        /** Espera sugerida por el header `Retry-After` (ms), acotada a un tope. */
+        retryAfterMs?: number;
+    }
     /** Cuota diaria agotada. */
     class QuotaExceededError extends YouTubeApiError {}
 }
 
-/** Cliente de la YouTube Data API v3. */
+/**
+ * Cliente de la YouTube Data API v3.
+ *
+ * Los métodos que llaman a la API rechazan con la jerarquía tipada
+ * {@link YoutubeClient.YouTubeApiError} (→ `RateLimitError` / `QuotaExceededError`):
+ * discriminá el fallo con `instanceof`, no con regex del mensaje. Los métodos que
+ * validan sus argumentos lanzan `TypeError` de forma sincrónica.
+ *
+ * @example
+ * ```js
+ * const YoutubeClient = require('youtube-fast-api');
+ * const { RateLimitError, QuotaExceededError } = YoutubeClient;
+ *
+ * const yt = new YoutubeClient(process.env.YOUTUBE_API_KEY);
+ *
+ * try {
+ *   // Paginador stateless: iterá comentarios sin cargar todo en memoria.
+ *   for await (const comment of yt.comments('dQw4w9WgXcQ')) {
+ *     console.log(comment.authorDisplayName, comment.textDisplay);
+ *   }
+ * } catch (err) {
+ *   if (err instanceof QuotaExceededError) {
+ *     // Cuota diaria agotada: reintentar mañana, no ahora.
+ *   } else if (err instanceof RateLimitError) {
+ *     // 429: err.retryAfterMs indica cuánto esperar.
+ *   } else {
+ *     throw err;
+ *   }
+ * }
+ * ```
+ */
 declare class YoutubeClient {
     constructor(apiKey: string);
 
     // --- Comentarios ---
     /** Trae todos los comentarios de un video (pagina internamente). */
     getAllComments(videoId: string): Promise<YoutubeClient.Comment[]>;
-    /** Paginador stateless: cada valor es una página (array) de comentarios. */
+    /**
+     * Paginador stateless: cada valor es una página (array) de comentarios.
+     * @throws {TypeError} Si `videoId` no es un string no vacío (sincrónico).
+     * @throws {YoutubeClient.YouTubeApiError} Si la API falla al iterar
+     *   (`RateLimitError` en 429, `QuotaExceededError` con la cuota agotada).
+     */
     commentsPages(videoId: string, options?: YoutubeClient.PageOptions): AsyncGenerator<YoutubeClient.Comment[], void, unknown>;
     /** Paginador stateless: comentarios uno por uno. */
     comments(videoId: string, options?: YoutubeClient.PageOptions): AsyncGenerator<YoutubeClient.Comment, void, unknown>;
@@ -100,10 +138,24 @@ declare class YoutubeClient {
      * viene en el ORDEN DE ENTRADA reconciliado por id; los ids que la API omite
      * (privados/borrados) NO aparecen — matchear por `.id`, no por índice.
      */
+    /**
+     * @throws {TypeError} Si `videoIds` no es un array (sincrónico).
+     * @throws {YoutubeClient.YouTubeApiError} Si la API falla.
+     */
     getVideosMetadata(videoIds: string[]): Promise<YoutubeClient.VideoMetadata[]>;
     /** Metadata de un solo video; `null` si la API no lo encontró. */
     getVideoMetadata(videoId: string): Promise<YoutubeClient.VideoMetadata | null>;
-    /** Búsqueda por término (descubrimiento/trending). */
+    /**
+     * Búsqueda por término (descubrimiento/trending).
+     * @throws {TypeError} Si `query` no es string, o si `options.order`/`pageSize`
+     *   están fuera de rango (sincrónico).
+     * @throws {YoutubeClient.YouTubeApiError} Si la API falla.
+     * @example
+     * ```js
+     * // 2 páginas (200 unidades de cuota), ordenado por fecha.
+     * const hits = await yt.searchVideos('lofi', { maxPages: 2, order: 'date' });
+     * ```
+     */
     searchVideos(query: string, options?: YoutubeClient.SearchOptions): Promise<YoutubeClient.SearchHit[]>;
 }
 
