@@ -41,6 +41,11 @@ jobs:
         # para consumidores viejos y nuevos (node10, node16 CJS/ESM, bundler).
         run: npm run check:pack --workspaces --if-present
 
+      - name: No circular imports
+        run: npm run lint:circular
+        # (knip/sherif quedan fuera: sus binarios nativos están bloqueados por AppLocker
+        # en el entorno de dev; la consistencia de versiones se chequea en el review.)
+
   bundle-size:
     runs-on: ubuntu-latest
     steps:

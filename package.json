@@ -13,16 +13,20 @@
     "size": "size-limit",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "npm run build && changeset publish"
+    "release": "npm run build && changeset publish",
+    "lint:circular": "dpdm --no-warning --no-tree --exit-code circular:1 packages/youtube-fast-api/index.js packages/google-sheets-wizard/src/index.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.4",
     "@changesets/cli": "^2.31.0",
     "@eslint/js": "^9.39.4",
     "@size-limit/preset-small-lib": "^12.1.0",
+    "dpdm": "^4.2.0",
     "eslint": "^9.39.4",
     "globals": "^17.7.0",
+    "knip": "^6.24.0",
     "publint": "^0.3.21",
+    "sherif": "^1.13.0",
     "size-limit": "^12.1.0",
     "tsd": "^0.33.0",
     "typescript-eslint": "^8.62.1"

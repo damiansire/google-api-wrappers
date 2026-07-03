@@ -1,21 +1,9 @@
-import type { Common } from "googleapis";
 import getRange from "./libs/getRange";
-import type { Row, MappedRow } from "./libs/getRange";
+import type { Row, MappedRow, SheetsAuth } from "./libs/getRange";
 
-/**
- * Credentials accepted by the Google Sheets API.
- *
- * Matches the `auth` union of the underlying `googleapis` Sheets v4 client, so
- * the consumer gets autocompletion and compile-time errors instead of `any`.
- */
-export type SheetsAuth =
-  | string
-  | Common.OAuth2Client
-  | Common.JWT
-  | Common.Compute
-  | Common.UserRefreshClient
-  | Common.BaseExternalAccountClient
-  | Common.GoogleAuth;
+// SheetsAuth se define en ./libs/getRange (donde se usa) para evitar un ciclo de
+// imports; acá se re-exporta como parte de la API pública.
+export type { SheetsAuth };
 
 /**
  * A class for interacting with Google Sheets data.
