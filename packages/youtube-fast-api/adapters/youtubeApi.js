@@ -49,14 +49,31 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Una sola pasada del GET. Resuelve con el JSON parseado o rechaza con un error
 // que trae `.retryable` y `.retryAfterMs` para que la capa de reintento decida.
+
+// Fallos de TRANSPORTE de un GET idempotente (socket reset/timeout/DNS) son seguros
+// de reintentar. Importa sobre todo con keep-alive: un socket reusado que el server
+// ya cerró da ECONNRESET en la request siguiente — el modo de falla clásico.
+const TRANSIENT_CODES = new Set(['ECONNRESET', 'ETIMEDOUT', 'EPIPE', 'ECONNREFUSED', 'EAI_AGAIN', 'ENETUNREACH', 'ENOTFOUND']);
+function isTransientTransport(err) {
+    if (!err) return false;
+    if (err.code && TRANSIENT_CODES.has(err.code)) return true;
+    return /socket hang up|timed out/i.test(err.message || '');
+}
+
 function doRequest(url) {
     return new Promise((resolve, reject) => {
+        // Marca retryable los errores de transporte (parse-errors NO: reintentar no
+        // arregla un body inválido).
+        const failTransport = (err) => {
+            if (isTransientTransport(err)) err.retryable = true;
+            reject(err);
+        };
         const req = https.get(url, { agent }, (res) => {
             const data = [];
             res.on('data', (chunk) => data.push(chunk));
             // Sin este handler, un corte a mitad de body (ECONNRESET tras headers)
             // emitia 'error' sobre `res` sin listener -> Promise colgada / crash.
-            res.on('error', reject);
+            res.on('error', failTransport);
             res.on('end', () => {
                 const body = Buffer.concat(data).toString();
                 if (res.statusCode >= 400) {
@@ -73,10 +90,12 @@ function doRequest(url) {
                     reject(new YouTubeApiError('Failed to parse response body as JSON: ' + parseErr.message, { cause: parseErr }));
                 }
             });
-        }).on('error', reject);
+        }).on('error', failTransport);
 
         req.setTimeout(30000, () => {
-            req.destroy(new Error('Request timed out'));
+            const err = new Error('Request timed out');
+            err.retryable = true; // el timeout de un GET idempotente se reintenta
+            req.destroy(err);
         });
     });
 }

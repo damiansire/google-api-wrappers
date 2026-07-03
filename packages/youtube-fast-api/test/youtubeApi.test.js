@@ -15,6 +15,7 @@ const {
   makeRequest,
   YouTubeApiError,
   RateLimitError,
+  QuotaExceededError,
 } = require('../adapters/youtubeApi');
 
 // Reemplaza https.get por un fake mientras corre `run` y lo restaura siempre.
@@ -40,10 +41,10 @@ function withHttpsGetStub(drive, run) {
         req.emit('error', err);
       }
     };
-    req.respond = (statusCode, body) => {
+    req.respond = (statusCode, body, headers = {}) => {
       const res = new EventEmitter();
       res.statusCode = statusCode;
-      res.headers = {};
+      res.headers = headers;
       onResponse(res);
       for (const chunk of Array.isArray(body) ? body : [body]) {
         res.emit('data', Buffer.from(chunk));
@@ -135,40 +136,93 @@ test('makeRequest: un 429 que agota los reintentos rechaza con RateLimitError ti
       ),
   ));
 
-test('makeRequest: un error en el stream de respuesta (corte a mitad de body) rechaza y no cuelga', () =>
+test('makeRequest: un corte a mitad de body (socket hang up) es transitorio -> reintenta y no cuelga', () =>
   withHttpsGetStub(
     (req) => req.respondThenError(200, new Error('socket hang up mid-body')),
-    () => assert.rejects(makeRequest('https://example.test/cut'), /socket hang up mid-body/),
+    () => assert.rejects(
+      makeRequest('https://example.test/cut', { retryBaseMs: 0, maxRetries: 1 }),
+      /socket hang up mid-body/,
+    ),
   ));
 
-test('makeRequest: body no-JSON con status 200 rechaza con "Failed to parse"', () =>
-  withHttpsGetStub(
-    (req) => req.respond(200, '<html>not json</html>'),
-    () =>
-      assert.rejects(
-        makeRequest('https://example.test/html'),
-        /Failed to parse response body as JSON/,
-      ),
-  ));
-
-test('makeRequest: un error de socket rechaza con ese mismo error', () =>
-  withHttpsGetStub(
-    (req) => req.emit('error', new Error('read ECONNRESET')),
-    () => assert.rejects(makeRequest('https://example.test/reset'), /ECONNRESET/),
-  ));
-
-test('makeRequest: configura un timeout de 30s y al dispararse rechaza con "Request timed out"', () => {
-  let timeoutMs = null;
+test('makeRequest: body no-JSON con status 200 NO se reintenta (parse-error) y rechaza', () => {
+  let calls = 0;
   return withHttpsGetStub(
-    (req) => {
-      timeoutMs = req.timeoutMs;
-      // Simula que el socket se quedo colgado: dispara el callback del timeout,
-      // que en makeRequest hace req.destroy(new Error('Request timed out')).
-      req.timeoutCallback();
-    },
+    (req) => { calls += 1; req.respond(200, '<html>not json</html>'); },
     async () => {
-      await assert.rejects(makeRequest('https://example.test/hang'), /Request timed out/);
-      assert.strictEqual(timeoutMs, 30000, 'el timeout debe registrarse en 30000 ms');
+      await assert.rejects(
+        makeRequest('https://example.test/html', { retryBaseMs: 0 }),
+        /Failed to parse response body as JSON/,
+      );
+      assert.strictEqual(calls, 1, 'un parse-error no es retryable: una sola llamada');
     },
   );
 });
+
+test('makeRequest: un ECONNRESET (transporte) se reintenta y un 200 posterior resuelve', () => {
+  let calls = 0;
+  return withHttpsGetStub(
+    (req) => {
+      calls += 1;
+      if (calls === 1) {
+        const e = new Error('read ECONNRESET');
+        e.code = 'ECONNRESET';
+        req.emit('error', e);
+      } else {
+        req.respond(200, '{"ok":true}');
+      }
+    },
+    async () => {
+      const result = await makeRequest('https://example.test/reset', { retryBaseMs: 0 });
+      assert.deepStrictEqual(result, { ok: true });
+      assert.strictEqual(calls, 2, 'reintentó tras el ECONNRESET (socket keep-alive cerrado por el server)');
+    },
+  );
+});
+
+test('makeRequest: el timeout de 30s es retryable (transporte) -> reintenta y agota', () => {
+  let timeoutMs = null;
+  let calls = 0;
+  return withHttpsGetStub(
+    (req) => { calls += 1; timeoutMs = req.timeoutMs; req.timeoutCallback(); },
+    async () => {
+      await assert.rejects(
+        makeRequest('https://example.test/hang', { retryBaseMs: 0, maxRetries: 2 }),
+        /Request timed out/,
+      );
+      assert.strictEqual(timeoutMs, 30000, 'el timeout debe registrarse en 30000 ms');
+      assert.strictEqual(calls, 3, '1 intento + 2 reintentos (el timeout es transporte, retryable)');
+    },
+  );
+});
+
+test('makeRequest: 403 quotaExceeded (body estructurado real) -> QuotaExceededError, no retryable', () => {
+  let calls = 0;
+  return withHttpsGetStub(
+    (req) => { calls += 1; req.respond(403, '{"error":{"errors":[{"reason":"quotaExceeded"}]}}'); },
+    async () => {
+      await assert.rejects(makeRequest('https://example.test/quota', { retryBaseMs: 0 }), (err) => {
+        assert.ok(err instanceof QuotaExceededError, 'debe ser QuotaExceededError');
+        assert.ok(err instanceof YouTubeApiError, 'y de la jerarquia');
+        assert.strictEqual(err.status, 403);
+        assert.strictEqual(err.reason, 'quotaExceeded');
+        return true;
+      });
+      assert.strictEqual(calls, 1, 'un 403 de cuota es permanente: no se reintenta');
+    },
+  );
+});
+
+test('makeRequest: honra el header Retry-After (segundos -> ms) en el error rechazado', () =>
+  withHttpsGetStub(
+    (req) => req.respond(429, '{"error":{"errors":[{"reason":"rateLimitExceeded"}]}}', { 'retry-after': '2' }),
+    () => assert.rejects(
+      // maxRetries:0 -> rechaza en el primer intento, sin dormir; verifica el parseo s->ms.
+      makeRequest('https://example.test/limited', { retryBaseMs: 0, maxRetries: 0 }),
+      (err) => {
+        assert.ok(err instanceof RateLimitError, 'RateLimitError');
+        assert.strictEqual(err.retryAfterMs, 2000, 'Retry-After: 2 -> 2000 ms');
+        return true;
+      },
+    ),
+  ));
