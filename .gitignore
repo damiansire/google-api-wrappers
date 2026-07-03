@@ -3,3 +3,7 @@ dist/
 coverage/
 *.log
 .DS_Store
+
+# Monorepo npm-workspaces: el ÚNICO lockfile válido es el de la raíz.
+# Los lockfiles por paquete divergen del árbol real de deps y confunden a npm/CI.
+packages/*/package-lock.json
