@@ -35,16 +35,31 @@ async function getNextVideosPage(apiKey, channelId, pageSize, token) {
 }
 
 // videos.list acepta hasta 50 ids por request (1 unidad c/u): se parte en
-// chunks de 50 y se concatenan los resultados.
+// chunks de 50 y se resuelven en paralelo (cada chunk es una request
+// independiente, no hay pageToken que los encadene). Se acota la concurrencia
+// para no saturar sockets; el orden se preserva escribiendo cada resultado en
+// su indice.
 async function getVideosMetadata(apiKey, videoIds) {
     const chunkSize = 50;
-    let all = [];
+    const concurrency = 8;
+    const chunks = [];
     for (let i = 0; i < videoIds.length; i += chunkSize) {
-        const chunk = videoIds.slice(i, i + chunkSize);
-        const metadata = await videosDao.getVideosMetadata(apiKey, chunk);
-        all = all.concat(metadata);
+        chunks.push(videoIds.slice(i, i + chunkSize));
     }
-    return all;
+    const results = new Array(chunks.length);
+    let next = 0;
+    async function worker() {
+        while (next < chunks.length) {
+            const idx = next++;
+            results[idx] = await videosDao.getVideosMetadata(apiKey, chunks[idx]);
+        }
+    }
+    const workers = [];
+    for (let i = 0; i < Math.min(concurrency, chunks.length); i++) {
+        workers.push(worker());
+    }
+    await Promise.all(workers);
+    return results.flat();
 }
 
 // search.list acepta estos valores de `order`; cualquier otro hace que la API
