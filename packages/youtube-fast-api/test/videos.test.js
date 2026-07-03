@@ -90,6 +90,18 @@ test('client: getAllVideos pagina (via el async-generator canónico) hasta agota
   assert.strictEqual(requestedUrls.length, 2, 'debe hacer exactamente 2 requests');
 });
 
+test('client: channelVideoPages valida y acota pageSize (max 50 de search.list)', async () => {
+  const client = new YoutubeClient('KEY');
+  await assert.rejects(async () => {
+    // eslint-disable-next-line no-unused-vars
+    for await (const _ of client.channelVideoPages('c', { pageSize: -1 })) break;
+  }, /invalid pageSize/);
+  setResponses(searchResponse(['v1'], undefined));
+  // eslint-disable-next-line no-unused-vars
+  for await (const _ of client.channelVideoPages('c', { pageSize: 999 })) break;
+  assert.ok(requestedUrls[0].includes('maxResults=50'), 'pageSize>50 se acota a 50');
+});
+
 test('controller: getAllPlaylistByChannelId usa el endpoint playlists con maxResults y pagina hasta agotar el token', async () => {
   setResponses(
     playlistResponse(['p1', 'p2'], 'TOKEN_2'),

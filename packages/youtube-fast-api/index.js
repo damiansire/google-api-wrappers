@@ -2,6 +2,8 @@ const { getPaginatedComments, getNextCommentsPage } = require('./controllers/com
 
 const { getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos } = require('./controllers/videoController')
 
+const { normalizePageSize } = require('./pageSize');
+
 function youtubeClient(apiKey) {
     this.apiKey = apiKey;
     //Comments
@@ -33,6 +35,7 @@ function assertId(value, name) {
 // Paginas de comentarios de un video: cada `yield` es un array de comentarios.
 youtubeClient.prototype.commentsPages = async function* (videoId, { pageSize = 100 } = {}) {
     assertId(videoId, 'videoId');
+    pageSize = normalizePageSize(pageSize, 100); // commentThreads topea maxResults en 100
     let data = await getPaginatedComments(this.apiKey, videoId, pageSize);
     yield data.comments;
     while (data.nextPageToken) {
@@ -51,6 +54,7 @@ youtubeClient.prototype.comments = async function* (videoId, options) {
 // Paginas de ids de video de un canal: cada `yield` es un array de videoIds.
 youtubeClient.prototype.channelVideoPages = async function* (channelId, { pageSize = 50 } = {}) {
     assertId(channelId, 'channelId');
+    pageSize = normalizePageSize(pageSize, 50); // search.list topea maxResults en 50
     let data = await getPaginatedVideosByChannelId(this.apiKey, channelId, pageSize);
     yield data.allVideosId;
     while (data.nextPageToken) {
