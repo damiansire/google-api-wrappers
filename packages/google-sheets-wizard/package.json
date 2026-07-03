@@ -1,7 +1,7 @@
 {
   "name": "google-sheets-wizard",
   "version": "0.0.2",
-  "description": "Library for easy interaction with Google Sheets. Read, write, and update data effortlessly. Simplify your workflows and automate tasks.",
+  "description": "Read data from Google Sheets with a tiny, typed API (getRange, con mapeo opcional a objetos).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
