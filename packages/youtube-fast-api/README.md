@@ -205,6 +205,32 @@ const videoId = "PaRam-aY9p0"; // Acá el id del video
     }
 })();
 ```
+## Manejo de errores
+
+El wrapper distingue el fallo #1 real de la YouTube Data API —cuota agotada / rate-limit—
+con una jerarquía de errores tipada, para que no tengas que parsear strings:
+
+```js
+const youtubeClient = require("youtube-fast-api");
+const { QuotaExceededError, RateLimitError, YouTubeApiError } = youtubeClient;
+
+try {
+    await ytClient.searchVideos("angular", { maxPages: 3 });
+} catch (err) {
+    if (err instanceof QuotaExceededError) {
+        // cuota diaria agotada (403). err.status === 403, err.reason === "quotaExceeded"
+    } else if (err instanceof RateLimitError) {
+        // rate-limit (429). El cliente ya reintentó con backoff honrando Retry-After.
+    } else if (err instanceof YouTubeApiError) {
+        // otro error de la API. err.status / err.reason disponibles.
+    }
+}
+```
+
+- **Reintentos automáticos:** los 429/5xx y los errores de transporte (ECONNRESET, timeout)
+  se reintentan con backoff exponencial + jitter, honrando el header `Retry-After`. Los 4xx
+  permanentes (incl. cuota agotada) fallan de una.
+
 ## Compatibilidad
 
 - **Runtime:** Node.js **≥ 14** (código ES2016 + CommonJS; `require()` devuelve el cliente directo).
