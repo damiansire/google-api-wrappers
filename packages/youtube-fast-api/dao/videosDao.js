@@ -1,20 +1,15 @@
 const { makeRequest } = require('../adapters/youtubeApi');
-const { getVideosByChannelIdUrl, getNextPageTokenUrl, getPlaylistsByChannelIdUrl, getVideosMetadataUrl, getSearchVideosUrl } = require('../adapters/videoAdapter')
-
-async function getVideosByChannelId(apiKey, channelId) {
-    let channelDataUrl = getVideosByChannelIdUrl(apiKey, channelId);
-    let channelDataResponse = await makeRequest(channelDataUrl);
-    return responseToVideoId(channelDataResponse);
-}
+const { getNextPageTokenUrl, getPlaylistsByChannelIdUrl, getVideosMetadataUrl, getSearchVideosUrl } = require('../adapters/videoAdapter')
 
 async function getPaginatedVideosByChannelId(apiKey, channelId, pageSize) {
-    const getVideosUrl = getNextPageTokenUrl(apiKey, channelId, pageSize, '');
+    // getNextPageTokenUrl(apiKey, id, pageToken, pageSize): primera pagina = token vacio.
+    const getVideosUrl = getNextPageTokenUrl(apiKey, channelId, '', pageSize);
     let videosResponse = await makeRequest(getVideosUrl);
     return responseToVideoId(videosResponse);
 }
 
 async function getNextVideosPage(apiKey, videoId, paginatedSize, token) {
-    const nextPageUrl = getNextPageTokenUrl(apiKey, videoId, paginatedSize, token)
+    const nextPageUrl = getNextPageTokenUrl(apiKey, videoId, token, paginatedSize)
     const videosResponse = await makeRequest(nextPageUrl);
     return responseToVideoId(videosResponse);
 }
@@ -106,7 +101,6 @@ function dtoToSearchHit(item) {
 }
 
 module.exports = {
-    getVideosByChannelId,
     getPlaylistByChannelId,
     getPaginatedVideosByChannelId,
     getNextVideosPage,
