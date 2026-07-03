@@ -87,13 +87,24 @@ test('controller: getVideosMetadata deja en null las estadisticas ocultas (no 0)
   assert.strictEqual(meta.commentCount, null);
 });
 
+test('controller: getVideosMetadata reconcilia por id — orden de entrada aunque la API reordene, y omite los ausentes', async () => {
+  // La API devuelve v3, v1 (reordenados) y OMITE v2 (privado/borrado).
+  setResponses(videosResponse(videoItem('v3'), videoItem('v1')));
+  const metas = await videoController.getVideosMetadata('KEY', ['v1', 'v2', 'v3']);
+  // Debe salir en el ORDEN DE ENTRADA (v1, v3), no en el de la respuesta (v3, v1),
+  // y v2 (omitido por la API) no aparece.
+  assert.deepStrictEqual(metas.map((m) => m.id), ['v1', 'v3']);
+});
+
 test('controller: getVideosMetadata chunkea de a 50 ids', async () => {
-  // 51 ids -> 2 requests (50 + 1). Cada request devuelve 1 item.
-  setResponses(videosResponse(videoItem('a')), videosResponse(videoItem('b')));
+  // 51 ids -> 2 requests (50 + 1). Cada request devuelve 1 item cuyo id SÍ está en
+  // la entrada (uno del primer chunk, otro del segundo), para que sobreviva la
+  // reconciliacion por id.
   const ids = Array.from({ length: 51 }, (_, i) => `id${i}`);
+  setResponses(videosResponse(videoItem('id0')), videosResponse(videoItem('id50')));
   const metas = await videoController.getVideosMetadata('KEY', ids);
   assert.strictEqual(requestedUrls.length, 2, 'debe hacer exactamente 2 requests');
-  assert.strictEqual(metas.length, 2);
+  assert.deepStrictEqual(metas.map((m) => m.id), ['id0', 'id50']);
 });
 
 // --- search.list ---
