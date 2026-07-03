@@ -79,12 +79,13 @@ test('controller: getNextVideosPage mapea la pagina siguiente y manda maxResults
   assert.ok(requestedUrls[0].includes('pageToken=TOKEN_2'), 'pageToken debe ser el token');
 });
 
-test('controller: getAllVideosByChannelId pagina hasta agotar el token y deduplica', async () => {
+test('client: getAllVideos pagina (via el async-generator canónico) hasta agotar el token y deduplica', async () => {
+  const client = new YoutubeClient('KEY');
   setResponses(
     searchResponse(['v1', 'v2'], 'TOKEN_2'),
     searchResponse(['v2', 'v3'], undefined), // v2 repetido -> debe deduplicarse
   );
-  const all = await videoController.getAllVideosByChannelId('KEY', 'CHAN');
+  const all = await client.getAllVideos('CHAN');
   assert.deepStrictEqual(all, ['v1', 'v2', 'v3']);
   assert.strictEqual(requestedUrls.length, 2, 'debe hacer exactamente 2 requests');
 });

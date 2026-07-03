@@ -25,8 +25,10 @@ function assertId(value, name) {
 // --- Paginadores canonicos (stateless, recomendados) ------------------------
 // Async-iterators: no guardan cursor en la instancia, asi que dos paginaciones
 // pueden correr a la vez sin pisarse, terminan solas cuando no hay nextPageToken
-// y son testeables en aislamiento. Son la unica implementacion del "traer paginas":
-// getAll* de abajo las reusan (antes cada uno recopiaba el loop de paginacion).
+// y son testeables en aislamiento. Son el paginador canonico de comentarios y de
+// videos de canal: getAllComments/getAllVideos de abajo los reusan en vez de
+// recopiar el loop. (getPlaylist usa su propio loop: playlists.list es otro
+// endpoint, con id directo en vez de id.videoId.)
 
 // Paginas de comentarios de un video: cada `yield` es un array de comentarios.
 youtubeClient.prototype.commentsPages = async function* (videoId, { pageSize = 100 } = {}) {
