@@ -20,29 +20,19 @@ async function getPlaylistByChannelId(apiKey, channelId, pageToken = '') {
     return responseToPlaylistId(channelDataResponse);
 }
 
-function responseToVideoId(channelResponse) {
-    const allItemsId = channelResponse.items.map(video => dtoToVideo(video));
-    const allVideosId = allItemsId.filter(id => id);
-    const nextPageToken = channelResponse.nextPageToken;
-    return { nextPageToken, allVideosId };
+// Mapea una respuesta paginada a { nextPageToken, allVideosId } aplicando `dto` a
+// cada item y descartando los vacíos. search.list y playlists.list tienen la misma
+// forma de paginado; solo cambia de dónde sale el id (por eso el `dto` inyectado).
+function responseToIds(channelResponse, dto) {
+    const allVideosId = channelResponse.items.map(dto).filter((id) => id);
+    return { nextPageToken: channelResponse.nextPageToken, allVideosId };
 }
 
-function responseToPlaylistId(channelResponse) {
-    const allItemsId = channelResponse.items.map(video => dtoToPlaylist(video));
-    const allVideosId = allItemsId.filter(id => id);
-    const nextPageToken = channelResponse.nextPageToken;
-    return { nextPageToken, allVideosId };
-}
+// search.list: el id del video vive en item.id.videoId.
+const responseToVideoId = (r) => responseToIds(r, (item) => item.id.videoId);
 
-function dtoToVideo(item) {
-    return item.id.videoId;
-}
-
-function dtoToPlaylist(item) {
-    // playlists.list devuelve el id de la playlist directamente en `item.id`
-    // (string), no en `item.id.playlistId` como hace search.list.
-    return item.id;
-}
+// playlists.list: el id de la playlist es item.id directo (string), no item.id.playlistId.
+const responseToPlaylistId = (r) => responseToIds(r, (item) => item.id);
 
 // --- videos.list: metadata de videos ---
 
