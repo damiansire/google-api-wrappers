@@ -2,13 +2,15 @@ const videosDao = require('../dao/videosDao');
 
 async function getAllVideosByChannelId(apiKey, channelId) {
     const pageSize = 50;
-    let allVideosId = [];
+    // push(...) muta el mismo array O(1) amortizado; concat reasignaba y copiaba
+    // el acumulado entero en cada pagina (O(n^2) en canales grandes).
+    const allVideosId = [];
     const channelData = await getPaginatedVideosByChannelId(apiKey, channelId, pageSize);
-    allVideosId = allVideosId.concat(channelData.allVideosId)
+    allVideosId.push(...channelData.allVideosId);
     let nextPageToken = channelData.nextPageToken;
     while (nextPageToken) {
-        let newPage = await getNextVideosPage(apiKey, channelId, pageSize, nextPageToken);
-        allVideosId = allVideosId.concat(newPage.allVideosId);
+        const newPage = await getNextVideosPage(apiKey, channelId, pageSize, nextPageToken);
+        allVideosId.push(...newPage.allVideosId);
         nextPageToken = newPage.nextPageToken;
     }
     return [...new Set(allVideosId)];
@@ -16,11 +18,11 @@ async function getAllVideosByChannelId(apiKey, channelId) {
 
 
 async function getAllPlaylistByChannelId(apiKey, channelId) {
-    let allVideosId = [];
+    const allVideosId = [];
     let pageToken = '';
     do {
         const channelData = await videosDao.getPlaylistByChannelId(apiKey, channelId, pageToken);
-        allVideosId = allVideosId.concat(channelData.allVideosId);
+        allVideosId.push(...channelData.allVideosId);
         pageToken = channelData.nextPageToken;
     } while (pageToken);
     return { allVideosId };
@@ -69,18 +71,24 @@ const SEARCH_ORDERS = ['date', 'rating', 'relevance', 'title', 'videoCount', 'vi
 // search.list cuesta 100 unidades por pagina: `maxPages` es el tope de costo.
 async function searchVideos(apiKey, query, options = {}) {
     const { maxPages = 1, order = 'relevance', pageSize = 50 } = options;
-    // search.list topea maxResults en 50 y 400ea si se pasa o si el order no es
-    // valido: clampeamos/validamos en el cliente para fallar claro y temprano.
+    // search.list 400ea si el order no es valido o si maxResults sale de [1,50]:
+    // validamos en el cliente para FALLAR TEMPRANO y claro, no mandar un request
+    // roto. Un pageSize <= 0 / no numerico es un error del caller (antes se
+    // clampeaba silenciosamente a 0 -> maxResults=0 -> 400 garantizado).
     if (!SEARCH_ORDERS.includes(order)) {
         throw new TypeError(`invalid order "${order}"; expected one of: ${SEARCH_ORDERS.join(', ')}`);
     }
-    const clampedPageSize = Math.min(Math.max(Number(pageSize) || 0, 0), 50);
-    let hits = [];
+    const n = Number(pageSize);
+    if (!Number.isFinite(n) || n < 1) {
+        throw new TypeError(`invalid pageSize "${pageSize}"; expected a number between 1 and 50`);
+    }
+    const clampedPageSize = Math.min(Math.trunc(n), 50); // > 50 se acota al tope de la API
+    const hits = [];
     let pageToken = '';
     let pages = 0;
     while (pages < maxPages) {
         const page = await videosDao.searchVideosPage(apiKey, query, order, clampedPageSize, pageToken);
-        hits = hits.concat(page.hits);
+        hits.push(...page.hits);
         pages += 1;
         if (!page.nextPageToken || pages >= maxPages) break;
         pageToken = page.nextPageToken;

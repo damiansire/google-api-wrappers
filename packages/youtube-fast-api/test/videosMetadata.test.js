@@ -132,10 +132,17 @@ test('controller: searchVideos clampea pageSize al tope de 50 que admite search.
   assert.ok(requestedUrls[0].includes('maxResults=50'), 'pageSize > 50 debe clampearse a 50');
 });
 
-test('controller: searchVideos clampea pageSize negativo a 0', async () => {
-  setResponses(searchResponse(['v1'], undefined));
-  await videoController.searchVideos('KEY', 'x', { maxPages: 1, pageSize: -10 });
-  assert.ok(requestedUrls[0].includes('maxResults=0'), 'pageSize negativo debe clampearse a 0');
+test('controller: searchVideos rechaza pageSize inválido en vez de mandar maxResults=0', async () => {
+  // Antes clampeaba a 0 -> maxResults=0 -> 400 garantizado de la API. Ahora falla
+  // temprano y claro (fail-closed frente a un input roto del caller).
+  await assert.rejects(
+    () => videoController.searchVideos('KEY', 'x', { maxPages: 1, pageSize: -10 }),
+    /invalid pageSize/,
+  );
+  await assert.rejects(
+    () => videoController.searchVideos('KEY', 'x', { maxPages: 1, pageSize: 0 }),
+    /invalid pageSize/,
+  );
 });
 
 test('controller: searchVideos rechaza un order fuera del set permitido', async () => {

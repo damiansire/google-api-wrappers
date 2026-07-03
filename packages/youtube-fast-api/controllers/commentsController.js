@@ -11,11 +11,11 @@ async function getNextCommentsPage(apiKey, videoId, token, paginatedSize){
 
 async function getAllComments(apiKey, videoId) {
     let commentsData = await commentsDao.getComments(apiKey, videoId, 100);
-    let allComments = commentsData.comments;
-    //Iterate
+    const allComments = [...commentsData.comments];
+    //Iterate — push(...) evita el O(n^2) de reasignar el acumulado con concat.
     while (commentsData.nextPageToken) {
         commentsData = await commentsDao.getNextCommentsPage(apiKey, videoId, commentsData.nextPageToken, 100)
-        allComments = allComments.concat(commentsData.comments);
+        allComments.push(...commentsData.comments);
     }
 
     return allComments;
