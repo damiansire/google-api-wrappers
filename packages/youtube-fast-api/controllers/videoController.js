@@ -25,8 +25,13 @@ async function getNextVideosPage(apiKey, channelId, pageSize, token) {
 // videos.list acepta hasta 50 ids por request (1 unidad c/u): se parte en
 // chunks de 50 y se resuelven en paralelo (cada chunk es una request
 // independiente, no hay pageToken que los encadene). Se acota la concurrencia
-// para no saturar sockets; el orden se preserva escribiendo cada resultado en
-// su indice.
+// para no saturar sockets.
+//
+// IMPORTANTE: videos.list NO garantiza devolver los items en el orden pedido, y
+// OMITE los ids privados/borrados. Por eso reconciliamos por `id` y devolvemos en
+// el ORDEN DE ENTRADA: un caller que hacía `salida[i]` para el id `entrada[i]`
+// recibía datos cruzados en silencio. Los ids que la API omite quedan fuera del
+// resultado (matchear por `.id`, no por índice).
 async function getVideosMetadata(apiKey, videoIds) {
     const chunkSize = 50;
     const concurrency = 8;
@@ -47,7 +52,8 @@ async function getVideosMetadata(apiKey, videoIds) {
         workers.push(worker());
     }
     await Promise.all(workers);
-    return results.flat();
+    const byId = new Map(results.flat().map((meta) => [meta.id, meta]));
+    return videoIds.map((id) => byId.get(id)).filter((meta) => meta !== undefined);
 }
 
 // search.list acepta estos valores de `order`; cualquier otro hace que la API

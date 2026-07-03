@@ -95,7 +95,11 @@ declare class YoutubeClient {
     getNextVideosPage(pageSize?: number): Promise<string[]>;
 
     // --- Metadata / búsqueda ---
-    /** Metadata de varios videos (parte internamente en chunks de 50). */
+    /**
+     * Metadata de varios videos (parte internamente en chunks de 50). El resultado
+     * viene en el ORDEN DE ENTRADA reconciliado por id; los ids que la API omite
+     * (privados/borrados) NO aparecen — matchear por `.id`, no por índice.
+     */
     getVideosMetadata(videoIds: string[]): Promise<YoutubeClient.VideoMetadata[]>;
     /** Metadata de un solo video; `null` si la API no lo encontró. */
     getVideoMetadata(videoId: string): Promise<YoutubeClient.VideoMetadata | null>;
