@@ -36,6 +36,11 @@ jobs:
       - name: Type-tests (public API)
         run: npm run test:types
 
+      - name: Package checks (publint + are-the-types-wrong)
+        # Verifica sobre el tarball real que exports y tipos resuelven correctamente
+        # para consumidores viejos y nuevos (node10, node16 CJS/ESM, bundler).
+        run: npm run check:pack --workspaces --if-present
+
   bundle-size:
     runs-on: ubuntu-latest
     steps:

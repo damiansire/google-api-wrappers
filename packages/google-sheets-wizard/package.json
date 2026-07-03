@@ -26,7 +26,8 @@
     "build-test": "npm run build && jest --testMatch \"**/dist-test/builded-package.spec.ts\"",
     "test:types": "tsd",
     "lint": "eslint .",
-    "prepublishOnly": "npm run lint && npm run build-test"
+    "prepublishOnly": "npm run lint && npm run build-test && npm run check:pack",
+    "check:pack": "publint && attw --pack . --profile node16 --ignore-rules missing-export-equals"
   },
   "tsd": {
     "directory": "test-d"
@@ -67,5 +68,6 @@
   },
   "dependencies": {
     "googleapis": "^140.0.0"
-  }
+  },
+  "type": "commonjs"
 }
