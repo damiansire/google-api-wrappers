@@ -3,12 +3,14 @@
   "version": "2.1.0",
   "description": "A youtube api for easier data management",
   "main": "index.js",
+  "types": "index.d.ts",
   "sideEffects": false,
   "engines": {
     "node": ">=18"
   },
   "files": [
     "index.js",
+    "index.d.ts",
     "adapters",
     "controllers",
     "dao",
@@ -23,10 +25,12 @@
   "devDependencies": {
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.29.0"
+    "eslint-plugin-import": "^2.29.0",
+    "tsd": "^0.31.0"
   },
   "scripts": {
     "test": "node --test",
+    "test:types": "tsd",
     "lint": "eslint .",
     "prepublishOnly": "npm run lint"
   },

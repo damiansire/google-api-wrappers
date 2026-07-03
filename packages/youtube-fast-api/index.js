@@ -158,4 +158,11 @@ youtubeClient.prototype.searchVideos = async function (query, options) {
     return searchVideos(this.apiKey, query, options);
 };
 
+// El export principal es el constructor; ademas re-exponemos la jerarquia de
+// errores para que el consumidor distinga cuota/rate-limit por `instanceof`
+// sin importar rutas internas del paquete.
+const { YouTubeApiError, RateLimitError, QuotaExceededError } = require('./adapters/youtubeApi');
 module.exports = youtubeClient;
+module.exports.YouTubeApiError = YouTubeApiError;
+module.exports.RateLimitError = RateLimitError;
+module.exports.QuotaExceededError = QuotaExceededError;
