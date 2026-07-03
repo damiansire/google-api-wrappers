@@ -1,21 +1,7 @@
 const videosDao = require('../dao/videosDao');
 
-async function getAllVideosByChannelId(apiKey, channelId) {
-    const pageSize = 50;
-    // push(...) muta el mismo array O(1) amortizado; concat reasignaba y copiaba
-    // el acumulado entero en cada pagina (O(n^2) en canales grandes).
-    const allVideosId = [];
-    const channelData = await getPaginatedVideosByChannelId(apiKey, channelId, pageSize);
-    allVideosId.push(...channelData.allVideosId);
-    let nextPageToken = channelData.nextPageToken;
-    while (nextPageToken) {
-        const newPage = await getNextVideosPage(apiKey, channelId, pageSize, nextPageToken);
-        allVideosId.push(...newPage.allVideosId);
-        nextPageToken = newPage.nextPageToken;
-    }
-    return [...new Set(allVideosId)];
-}
-
+// (El "traer todos los videos de un canal" vive en el cliente como async-generator
+// canónico `channelVideoPages`; ya no se implementa el loop acá.)
 
 async function getAllPlaylistByChannelId(apiKey, channelId) {
     const allVideosId = [];
@@ -96,4 +82,4 @@ async function searchVideos(apiKey, query, options = {}) {
     return hits;
 }
 
-module.exports = { getAllVideosByChannelId, getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos };
+module.exports = { getAllPlaylistByChannelId, getPaginatedVideosByChannelId, getNextVideosPage, getVideosMetadata, searchVideos };
