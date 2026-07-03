@@ -1,6 +1,6 @@
-import type { SheetsAuth } from "../index";
+import { google } from "googleapis";
 
-const { google } = require("googleapis");
+import type { SheetsAuth } from "../index";
 
 /** A single cell value as returned by the Sheets v4 API. */
 export type Cell = string | number | boolean | null;
@@ -101,4 +101,8 @@ function decorateError(error: unknown): Error {
   return decorated;
 }
 
+export default getRange;
+
+// The whole module IS the function for CommonJS consumers (and for index.ts's
+// runtime require); the `export default` above only adds the typed ES entry.
 module.exports = getRange;
