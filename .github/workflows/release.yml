@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Gate: no versionar/publicar nada si el árbol no está sano.
+      - name: Lint
+        run: npm run lint
+
+      - name: Build workspaces
+        run: npm run build --workspaces --if-present
+
+      - name: Test
+        run: npm test
+
+      - name: Type-tests
+        run: npm run test:types
+
+      - name: Package checks (publint + are-the-types-wrong)
+        run: npm run check:pack --workspaces --if-present
+
+      # Con changesets pendientes -> abre el PR "Version Packages".
+      # Al mergear ese PR (versiones ya bumpeadas) -> publica a npm + tags + Releases.
+      - name: Changesets — version PR / publish
+        uses: changesets/action@v1
+        with:
+          version: npm run version-packages
+          publish: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
