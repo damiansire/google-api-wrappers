@@ -106,6 +106,16 @@ test('controller: searchVideos pagina hasta maxPages y descarta items sin videoI
   assert.ok(requestedUrls[0].includes('q=angular'), 'la URL debe incluir el query');
 });
 
+test('controller: searchVideos propaga el nextPageToken a la URL de la 2da pagina', async () => {
+  // Guard contra que el cursor no llegue: la 2da request DEBE llevar pageToken=P2,
+  // y la 1ra NO debe llevar pageToken (es la primera pagina).
+  setResponses(searchResponse(['v1'], 'P2'), searchResponse(['v2'], undefined));
+  await videoController.searchVideos('KEY', 'x', { maxPages: 2 });
+  assert.strictEqual(requestedUrls.length, 2);
+  assert.ok(!requestedUrls[0].includes('pageToken='), 'la 1ra pagina no lleva pageToken');
+  assert.ok(requestedUrls[1].includes('pageToken=P2'), 'la 2da pagina debe llevar el token previo');
+});
+
 test('controller: searchVideos respeta el tope de paginas aunque haya nextPageToken', async () => {
   // La primera pagina trae token, pero maxPages=1 corta igual.
   setResponses(searchResponse(['v1', 'v2'], 'P2'));
