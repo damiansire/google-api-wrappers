@@ -100,19 +100,23 @@ function doRequest(url) {
     });
 }
 
-// GET con reintento acotado: 429 y 5xx se reintentan con backoff exponencial +
-// jitter, honrando Retry-After; los demas 4xx (permanentes) fallan de una.
-// `retryBaseMs: 0` desactiva la espera (util en tests).
-async function makeRequest(url, { maxRetries = 3, retryBaseMs = 400 } = {}) {
+const DEFAULT_MAX_BACKOFF_MS = 30000; // tope: un Retry-After enorme no cuelga la operacion
+
+// GET con reintento acotado: 429/5xx y fallos de transporte se reintentan con backoff
+// exponencial + jitter, honrando Retry-After PERO con tope maximo (un Retry-After
+// arbitrariamente grande no debe colgar la operacion); los 4xx permanentes fallan de
+// una. `retryBaseMs:0` desactiva la espera (tests); `maxBackoffMs` acota el tope.
+async function makeRequest(url, { maxRetries = 3, retryBaseMs = 400, maxBackoffMs = DEFAULT_MAX_BACKOFF_MS } = {}) {
     let attempt = 0;
     for (;;) {
         try {
             return await doRequest(url);
         } catch (err) {
             if (!err || !err.retryable || attempt >= maxRetries) throw err;
-            const backoff = err.retryAfterMs != null
+            const raw = err.retryAfterMs != null
                 ? err.retryAfterMs
                 : Math.round(retryBaseMs * 2 ** attempt * (0.5 + Math.random()));
+            const backoff = Math.min(raw, maxBackoffMs); // Retry-After tambien se capea
             attempt += 1;
             if (backoff > 0) await sleep(backoff);
         }
