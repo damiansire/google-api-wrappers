@@ -2,8 +2,13 @@ import { google } from "googleapis";
 
 import type { SheetsAuth } from "../index";
 
-/** A single cell value as returned by the Sheets v4 API. */
-export type Cell = string | number | boolean | null;
+/**
+ * A single cell value. Con el render por defecto de la API (FORMATTED_VALUE, que
+ * es el que usa este wrapper) los valores llegan siempre como `string`; por eso el
+ * tipo es `string` y no `string | number | boolean`, que sería mentir respecto de
+ * lo que el consumidor recibe en runtime.
+ */
+export type Cell = string;
 
 /** A row is an ordered list of cell values. */
 export type Row = Cell[];
@@ -24,8 +29,8 @@ async function getRange(
       range,
     });
 
-    const rows = res.data.values as Row[] | undefined;
-    if (!rows || rows.length === 0) {
+    const raw = res.data.values;
+    if (!raw || raw.length === 0) {
       // Un rango vacío (hoja/columna vacía, filtro sin resultados) es un
       // resultado NORMAL de negocio, no un fallo: devolvemos lista vacía y
       // reservamos las excepciones para errores reales de la API. Obligar al
@@ -33,6 +38,14 @@ async function getRange(
       // distinguir "vacío" de "roto" es hostil.
       return [];
     }
+
+    // `res.data.values` es `any[][]` en los tipos de googleapis. En vez de un
+    // `as Row[]` de confianza, coercionamos cada celda a string (lo que la API
+    // realmente entrega con FORMATTED_VALUE; null/hueco -> ""): el tipo publico
+    // deja de mentir y no hay cast sin validacion.
+    const rows: Row[] = raw.map((row) =>
+      row.map((cell) => (cell === null || cell === undefined ? "" : String(cell)))
+    );
 
     if (objectKeys) {
       return rows.map((row) =>
