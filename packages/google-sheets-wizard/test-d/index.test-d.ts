@@ -3,7 +3,8 @@ import GoogleSheetsWizard from "google-sheets-wizard";
 import type { SheetsAuth } from "google-sheets-wizard";
 
 // The cell/row shape the public API resolves to (mirrors the lib's own types).
-type Cell = string | number | boolean | null;
+// Con el render por defecto (FORMATTED_VALUE) la API devuelve strings.
+type Cell = string;
 type Row = Cell[];
 type MappedRow = Record<string, Cell>;
 
