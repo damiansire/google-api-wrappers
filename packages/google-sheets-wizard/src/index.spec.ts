@@ -107,6 +107,17 @@ describe("getRange lib — objectKeys mapping", () => {
 
     expect(result).toEqual([{ id: "1", name: "" }]);
   });
+
+  it("rechaza objectKeys=[] con TypeError en vez de descartar los datos en silencio", async () => {
+    // Sin el guard, [] (truthy) daría [{}, {}...] perdiendo todas las celdas.
+    mockGet.mockResolvedValue({
+      data: { values: [["1", "Alice"]] },
+    });
+
+    await expect(getRange("auth", "sheet-id", "A1:B1", [])).rejects.toThrow(
+      TypeError
+    );
+  });
 });
 
 describe("getRange lib — error decoration", () => {

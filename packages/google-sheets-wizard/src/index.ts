@@ -66,17 +66,17 @@ class GoogleSheetsWizard {
    * // => [{ first: "Ada", last: "Lovelace" }, { first: "Alan", last: "Turing" }]
    * ```
    */
+  getRange(range: string): Promise<Row[]>;
+  getRange(range: string, objectKeys: string[]): Promise<MappedRow[]>;
   getRange(
     range: string,
     objectKeys?: string[]
   ): Promise<Row[] | MappedRow[]> {
-    return getRange(
-      this.auth,
-      this.spreadsheetId,
-      range,
-      objectKeys,
-      this.timeoutMs
-    );
+    // Ramificamos para que cada llamada matchee un overload concreto de la lib
+    // (forwardear `string[] | undefined` no resuelve overload, y el repo evita `as`).
+    return objectKeys
+      ? getRange(this.auth, this.spreadsheetId, range, objectKeys, this.timeoutMs)
+      : getRange(this.auth, this.spreadsheetId, range, undefined, this.timeoutMs);
   }
 }
 
