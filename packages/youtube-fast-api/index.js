@@ -145,6 +145,16 @@ youtubeClient.prototype.getNextVideosPage = async function (pageSize) {
 // Parte internamente en chunks de 50 (limite de videos.list).
 youtubeClient.prototype.getVideosMetadata = async function (videoIds) {
     if (!Array.isArray(videoIds)) throw new TypeError('expected an array of videoId strings');
+    // La reconciliacion final es por `.id` (string que viene de la API) contra un Map.
+    // Un id no-string (p.ej. number 12345) se manda igual pero `map.get(12345)` no
+    // matchea la key string '12345', asi que el video DESAPARECE del resultado sin
+    // error. Validamos cada elemento aca (con el indice ofensor) en vez de devolver
+    // en silencio menos metadata de la pedida.
+    videoIds.forEach((id, i) => {
+        if (typeof id !== 'string' || !id) {
+            throw new TypeError(`expected a non-empty videoId string at index ${i}`);
+        }
+    });
     return getVideosMetadata(this.apiKey, videoIds);
 };
 

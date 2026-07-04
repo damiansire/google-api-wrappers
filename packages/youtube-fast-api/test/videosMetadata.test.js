@@ -200,6 +200,18 @@ test('client: getVideosMetadata rechaza un argumento que no es array', async () 
   await assert.rejects(() => client.getVideosMetadata('v1'), TypeError);
 });
 
+test('client: getVideosMetadata rechaza un id no-string (evita omision silenciosa por mismatch de key)', async () => {
+  // Un number/''/null se mandaria pero no matchearia la key string del Map de
+  // reconciliacion y desapareceria del resultado sin error. Debe fallar con el indice.
+  const client = new YoutubeClient('KEY');
+  await assert.rejects(() => client.getVideosMetadata(['v1', 12345, 'v3']), (err) => {
+    assert.ok(err instanceof TypeError);
+    assert.match(err.message, /index 1/);
+    return true;
+  });
+  await assert.rejects(() => client.getVideosMetadata(['']), /index 0/);
+});
+
 test('client: searchVideos rechaza un query que no es string', async () => {
   const client = new YoutubeClient('KEY');
   await assert.rejects(() => client.searchVideos(123), TypeError);
