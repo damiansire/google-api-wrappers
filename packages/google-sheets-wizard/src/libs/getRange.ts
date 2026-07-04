@@ -1,5 +1,17 @@
 import { google } from "googleapis";
 import type { Common } from "googleapis";
+import { Agent } from "https";
+
+// Pool de sockets keep-alive (como el lado YouTube: maxSockets 10). Sin esto, cada
+// getRange reconstruye la conexión y repaga el handshake TLS. Es nivel de
+// transporte, así que se comparte entre distintas `auth`.
+const keepAliveAgent = new Agent({ keepAlive: true, maxSockets: 10 });
+
+// Timeout por defecto del request (ms). googleapis/gaxios NO trae timeout (0 =
+// infinito): una conexión colgada (peer que no cierra, red caída post-handshake)
+// dejaría la Promise sin resolver y bloquearía al consumidor para siempre. Igualamos
+// el tope de 30s que el transporte de YouTube ya aplica — cerrar esa asimetría.
+const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
  * Credentials accepted by the Google Sheets API. Coincide con la union `auth` del
@@ -36,14 +48,15 @@ async function getRange(
   auth: SheetsAuth,
   spreadsheetId: string,
   range: string,
-  objectKeys?: string[]
+  objectKeys?: string[],
+  timeoutMs?: number
 ): Promise<Row[] | MappedRow[]> {
   try {
     const sheets = google.sheets({ version: "v4", auth });
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
+    const res = await sheets.spreadsheets.values.get(
+      { spreadsheetId, range },
+      { timeout: timeoutMs ?? DEFAULT_TIMEOUT_MS, agent: keepAliveAgent }
+    );
 
     const raw = res.data.values;
     if (!raw || raw.length === 0) {

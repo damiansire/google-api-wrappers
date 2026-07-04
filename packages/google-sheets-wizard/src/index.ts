@@ -17,15 +17,25 @@ class GoogleSheetsWizard {
   /** A Google API authentication object for authorization. */
   auth: SheetsAuth;
 
+  /** Per-request timeout in ms (default 30s). Guards against hung connections. */
+  timeoutMs?: number | undefined;
+
   /**
    * Creates a new GoogleSheetsWizard instance.
    *
    * @param auth A Google API authentication object.
    * @param spreadsheetId The ID of the Google Sheet.
+   * @param options Optional settings. `timeoutMs` caps every request (default
+   *   30000) so a hung connection can't block the consumer forever.
    */
-  constructor(auth: SheetsAuth, spreadsheetId: string) {
+  constructor(
+    auth: SheetsAuth,
+    spreadsheetId: string,
+    options?: { timeoutMs?: number }
+  ) {
     this.spreadsheetId = spreadsheetId;
     this.auth = auth;
+    this.timeoutMs = options?.timeoutMs;
   }
 
   /**
@@ -60,7 +70,13 @@ class GoogleSheetsWizard {
     range: string,
     objectKeys?: string[]
   ): Promise<Row[] | MappedRow[]> {
-    return getRange(this.auth, this.spreadsheetId, range, objectKeys);
+    return getRange(
+      this.auth,
+      this.spreadsheetId,
+      range,
+      objectKeys,
+      this.timeoutMs
+    );
   }
 }
 
