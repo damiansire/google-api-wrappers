@@ -31,10 +31,10 @@ describe("GoogleSheetsWizard.getRange", () => {
     const wizard = new GoogleSheetsWizard("auth-token", "sheet-id");
     const result = await wizard.getRange("A1:B2");
 
-    expect(mockGet).toHaveBeenCalledWith({
-      spreadsheetId: "sheet-id",
-      range: "A1:B2",
-    });
+    expect(mockGet).toHaveBeenCalledWith(
+      { spreadsheetId: "sheet-id", range: "A1:B2" },
+      expect.objectContaining({ timeout: 30000 })
+    );
     expect(result).toEqual([["a", "b"], ["c", "d"]]);
   });
 
@@ -50,6 +50,33 @@ describe("GoogleSheetsWizard.getRange", () => {
 
     const wizard = new GoogleSheetsWizard("auth-token", "sheet-id");
     await expect(wizard.getRange("A1:B2")).resolves.toEqual([]);
+  });
+});
+
+describe("getRange — transporte (timeout + keep-alive)", () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  it("pasa el timeout por defecto (30s) y un agente keep-alive a la API", async () => {
+    mockGet.mockResolvedValue({ data: { values: [["a"]] } });
+
+    await new GoogleSheetsWizard("auth", "sheet-id").getRange("A1:A1");
+
+    const options = mockGet.mock.calls[0][1];
+    expect(options.timeout).toBe(30000);
+    // El agente keep-alive va en cada request (evita repagar el handshake TLS).
+    expect(options.agent).toBeDefined();
+  });
+
+  it("respeta un timeout custom pasado por el constructor", async () => {
+    mockGet.mockResolvedValue({ data: { values: [["a"]] } });
+
+    await new GoogleSheetsWizard("auth", "sheet-id", {
+      timeoutMs: 5000,
+    }).getRange("A1:A1");
+
+    expect(mockGet.mock.calls[0][1].timeout).toBe(5000);
   });
 });
 
