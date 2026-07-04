@@ -44,6 +44,23 @@ export type Row = Cell[];
 /** A row mapped onto the supplied `objectKeys`. */
 export type MappedRow = Record<string, Cell>;
 
+// Overloads: la forma del retorno la decide `objectKeys` — sin keys, filas crudas
+// (`Row[]`); con keys, objetos (`MappedRow[]`). Así el consumidor obtiene el tipo
+// exacto sin castear una union indiscriminada.
+function getRange(
+  auth: SheetsAuth,
+  spreadsheetId: string,
+  range: string,
+  objectKeys?: undefined,
+  timeoutMs?: number
+): Promise<Row[]>;
+function getRange(
+  auth: SheetsAuth,
+  spreadsheetId: string,
+  range: string,
+  objectKeys: string[],
+  timeoutMs?: number
+): Promise<MappedRow[]>;
 async function getRange(
   auth: SheetsAuth,
   spreadsheetId: string,
@@ -51,6 +68,15 @@ async function getRange(
   objectKeys?: string[],
   timeoutMs?: number
 ): Promise<Row[] | MappedRow[]> {
+  // `objectKeys = []` (array vacío, truthy) tomaría la rama de mapeo y produciría
+  // un `{}` por fila, DESCARTANDO todos los datos en silencio. Es un argumento
+  // inválido: lanzamos TypeError claro ANTES del try para no decorarlo como si
+  // fuese un error de la API.
+  if (objectKeys && objectKeys.length === 0) {
+    throw new TypeError(
+      "objectKeys must be a non-empty array; omit it to get raw rows."
+    );
+  }
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const res = await sheets.spreadsheets.values.get(

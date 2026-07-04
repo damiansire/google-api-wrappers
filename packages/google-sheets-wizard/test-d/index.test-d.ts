@@ -15,11 +15,10 @@ expectType<GoogleSheetsWizard>(wizard);
 // A bare string is assignable to SheetsAuth (the simplest 85% case).
 expectAssignable<SheetsAuth>("my-token");
 
-// getRange(range, objectKeys?) -> Promise<Row[] | MappedRow[]>.
-expectType<Promise<Row[] | MappedRow[]>>(wizard.getRange("A1:B2"));
-expectType<Promise<Row[] | MappedRow[]>>(
-  wizard.getRange("A1:B2", ["id", "name"])
-);
+// Overloads: el input decide la forma del retorno, sin union ni cast.
+// Sin objectKeys -> filas crudas; con objectKeys -> objetos mapeados.
+expectType<Promise<Row[]>>(wizard.getRange("A1:B2"));
+expectType<Promise<MappedRow[]>>(wizard.getRange("A1:B2", ["id", "name"]));
 
 // Public instance fields are typed (no `any`).
 expectType<string>(wizard.spreadsheetId);
