@@ -181,3 +181,10 @@ test('client: los metodos que reciben un channelId rechazan undefined, null, "" 
     await assert.rejects(() => client.getPaginatedChannelVideos(bad), TypeError, `getPaginatedChannelVideos(${JSON.stringify(bad)})`);
   }
 });
+
+test('client: un 2xx sin campo items da una pagina vacia, no un TypeError opaco', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses({}); // cuerpo 2xx sin `items` ni nextPageToken
+  const all = await client.getAllVideos('UCchannel');
+  assert.deepStrictEqual(all, []);
+});

@@ -24,7 +24,10 @@ async function getPlaylistByChannelId(apiKey, channelId, pageToken = '') {
 // cada item y descartando los vacíos. search.list y playlists.list tienen la misma
 // forma de paginado; solo cambia de dónde sale el id (por eso el `dto` inyectado).
 function responseToIds(channelResponse, dto) {
-    const allVideosId = channelResponse.items.map(dto).filter((id) => id);
+    // `items` puede faltar en un 2xx (respuesta parcial, o resultado vacío que
+    // omite el campo): guardamos con `|| []` para devolver una página vacía en vez
+    // de un TypeError opaco. Mismo criterio que responseToVideosMetadata/SearchHits.
+    const allVideosId = (channelResponse.items || []).map(dto).filter((id) => id);
     return { nextPageToken: channelResponse.nextPageToken, allVideosId };
 }
 

@@ -16,7 +16,10 @@ async function getNextCommentsPage(apiKey, videoId, token, paginatedSize) {
 }
 
 function responseToComments(commentsResponse) {
-    return commentsResponse.items.map(comment => dtoToComment(comment));
+    // `items` puede faltar en un 2xx (respuesta parcial / resultado vacío que omite
+    // el campo): `|| []` devuelve una página vacía en vez de un TypeError opaco,
+    // igual que los mappers de videos.list/search.list.
+    return (commentsResponse.items || []).map(comment => dtoToComment(comment));
 }
 
 function dtoToComment(comment) {
