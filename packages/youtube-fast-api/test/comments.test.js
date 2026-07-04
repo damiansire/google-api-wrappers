@@ -174,3 +174,10 @@ test('client: los metodos que reciben un videoId rechazan undefined, null, "" y 
     await assert.rejects(() => client.getPaginatedComments(bad), TypeError, `getPaginatedComments(${JSON.stringify(bad)})`);
   }
 });
+
+test('client: un 2xx sin campo items da una pagina vacia, no un TypeError opaco', async () => {
+  const client = new YoutubeClient('KEY');
+  setResponses({}); // cuerpo 2xx sin `items` ni nextPageToken
+  const all = await client.getAllComments('vid');
+  assert.deepStrictEqual(all, []);
+});
