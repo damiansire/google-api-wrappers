@@ -64,10 +64,13 @@ test.getRange("A2:B").then((data) => {
 
 ```
 [
-  ['Alice', 30],
-  ['Bob', 25]
+  ['Alice', '30'],
+  ['Bob', '25']
 ]
 ```
+
+> Los valores de celda siempre llegan como **strings** (la API usa `FORMATTED_VALUE`);
+> por eso `30` aparece como `'30'`. Convertí a número vos si lo necesitás (`Number(v)`).
 
 ### Complete code Example with multiple functions and code modularization
 
@@ -88,7 +91,7 @@ const sheetsWizard = new GoogleSheetsWizard(auth, spreadsheetId);
 async function getUserData() {
   try {
     const data = await sheetsWizard.getRange("A1:B"); // Fetch data from range A1:B
-    console.log(data);
+    return data; // return it so the caller (below) receives the rows
   } catch (error) {
     // Custom errors will help you debug
     console.error(error.message);
@@ -98,7 +101,7 @@ async function getUserData() {
 async function getUserLocation() {
   try {
     const data = await sheetsWizard.getRange("C:D"); // Fetch data from columns C and D
-    console.log(data);
+    return data;
   } catch (error) {
     // Custom errors will help you debug
     console.error(error.message);
@@ -113,9 +116,9 @@ getUserData().then(console.log);
 
 ```javascript
 [
-  ["Alice", 30],
-  ["Bob", 25],
-  ["Damian", 25],
+  ["Alice", "30"],
+  ["Bob", "25"],
+  ["Damian", "25"],
 ];
 ```
 
