@@ -120,6 +120,54 @@ describe("getRange lib — objectKeys mapping", () => {
   });
 });
 
+describe("getRange lib — coerción de tipos (invariante #3: los tipos no mienten)", () => {
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  // El invariante clave del paquete: getRange declara devolver `string` (Cell) y
+  // coerciona cada celda con String(cell). La API `values.get` tipa las celdas como
+  // `any[][]` y con FORMATTED_VALUE entrega strings, PERO un mock/config distinto puede
+  // traer number/boolean/null. Sin este test, todos los mocks entregan solo strings, así
+  // que reemplazar `String(cell)` por un `as Row[]` de confianza pasaría en verde mientras
+  // el consumidor recibiría number/null tipados como string. Este test lo prohíbe.
+  it("coerciona celdas no-string (number/boolean) a string en modo crudo", async () => {
+    mockGet.mockResolvedValue({
+      data: { values: [[1, true], [2.5, false]] },
+    });
+
+    const result = await getRange("auth", "sheet-id", "A1:B2");
+
+    expect(result).toEqual([["1", "true"], ["2.5", "false"]]);
+    // No basta con la igualdad: afirmamos el TIPO real en runtime (no `as`).
+    for (const row of result) {
+      for (const cell of row) expect(typeof cell).toBe("string");
+    }
+  });
+
+  it("normaliza null/undefined a cadena vacía (no 'null'/'undefined')", async () => {
+    mockGet.mockResolvedValue({
+      data: { values: [[null, undefined, 0]] },
+    });
+
+    const result = await getRange("auth", "sheet-id", "A1:C1");
+
+    expect(result).toEqual([["", "", "0"]]);
+  });
+
+  it("coerciona también en modo objectKeys (el mapeo no reintroduce el tipo crudo)", async () => {
+    mockGet.mockResolvedValue({
+      data: { values: [[42, null, true]] },
+    });
+
+    const result = await getRange("auth", "sheet-id", "A1:C1", ["n", "empty", "flag"]);
+
+    expect(result).toEqual([{ n: "42", empty: "", flag: "true" }]);
+    const [obj] = result;
+    for (const v of Object.values(obj)) expect(typeof v).toBe("string");
+  });
+});
+
 describe("getRange lib — error decoration", () => {
   beforeEach(() => {
     mockGet.mockReset();
