@@ -1,0 +1,22 @@
+# Config de lychee para el chequeo de links de los README.
+# Objetivo: fallar solo ante links GENUINAMENTE rotos, sin ruido.
+
+# Reintentos y timeout razonables para links externos lentos.
+max_retries = 3
+timeout = 20
+
+# Un User-Agent de navegador: muchos sitios (npm/Cloudflare) rechazan bots.
+user_agent = "Mozilla/5.0 (compatible; lychee link checker)"
+
+# Códigos aceptados como "vivo": 200 OK, 429 (rate-limit ≠ roto),
+# 403 (npm/Cloudflare bloquean HEAD de bots aunque la página exista).
+accept = [200, 206, 429, 403]
+
+# No chequear anclas internas de Markdown ni hosts locales.
+exclude_loopback = true
+exclude = [
+  # Páginas de paquete de npm: existen (verificadas contra registry.npmjs.org)
+  # pero devuelven 403 a clientes no-navegador. Se excluyen para evitar
+  # falsos positivos; su existencia real la garantiza el publish del release.
+  "^https://www\\.npmjs\\.com/package/",
+]
