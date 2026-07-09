@@ -1,0 +1,41 @@
+name: Links
+
+# Chequea que los links y badges de los README no estén rotos.
+# Corre en cada push/PR a main y semanalmente (los links externos se pudren solos).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - '.github/workflows/links.yml'
+      - 'lychee.toml'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - '.github/workflows/links.yml'
+      - 'lychee.toml'
+  schedule:
+    - cron: '0 6 * * 1' # lunes 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Link Checker
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config lychee.toml
+            --no-progress
+            README.md
+            packages/youtube-fast-api/README.md
+            packages/google-sheets-wizard/readme.md
+          fail: true
+          jobSummary: true
