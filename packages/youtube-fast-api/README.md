@@ -1,7 +1,7 @@
-<br>
-
 # YouTube Fast Api
-<br>
+
+[![npm version](https://img.shields.io/npm/v/youtube-fast-api)](https://www.npmjs.com/package/youtube-fast-api)
+[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
 
 ## Introducción 
 
