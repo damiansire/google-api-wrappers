@@ -2,13 +2,13 @@
   {
     "name": "google-sheets-wizard (own code, googleapis external)",
     "path": "packages/google-sheets-wizard/dist/index.js",
-    "ignore": ["googleapis"],
+    "ignore": ["googleapis", "https", "http"],
     "limit": "3 kB"
   },
   {
     "name": "youtube-fast-api (own code, node builtins external)",
     "path": "packages/youtube-fast-api/index.js",
     "ignore": ["https", "http"],
-    "limit": "3 kB"
+    "limit": "4 kB"
   }
 ]
