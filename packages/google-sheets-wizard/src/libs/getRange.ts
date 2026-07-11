@@ -44,6 +44,29 @@ export type Row = Cell[];
 /** A row mapped onto the supplied `objectKeys`. */
 export type MappedRow = Record<string, Cell>;
 
+/**
+ * Coerces a raw API row (`any[]`, per googleapis' loose typing) into a `Row`
+ * (`string[]`). Shared by `getRange` and `getRanges` so both honor the same
+ * invariant: the public type says `string`, so runtime must be `string` too
+ * (null/hueco -> "").
+ */
+function coerceRow(row: unknown[]): Row {
+  return row.map((cell) =>
+    cell === null || cell === undefined ? "" : String(cell)
+  );
+}
+
+/** Maps rows onto `objectKeys`, filling missing cells with `""`. Shared by
+ * `getRange` and `getRanges`. */
+function mapRows(rows: Row[], objectKeys: string[]): MappedRow[] {
+  return rows.map((row) =>
+    objectKeys.reduce<MappedRow>((obj, key, index) => {
+      obj[key] = row[index] ?? "";
+      return obj;
+    }, {})
+  );
+}
+
 // Overloads: la forma del retorno la decide `objectKeys` — sin keys, filas crudas
 // (`Row[]`); con keys, objetos (`MappedRow[]`). Así el consumidor obtiene el tipo
 // exacto sin castear una union indiscriminada.
@@ -98,17 +121,10 @@ async function getRange(
     // `as Row[]` de confianza, coercionamos cada celda a string (lo que la API
     // realmente entrega con FORMATTED_VALUE; null/hueco -> ""): el tipo publico
     // deja de mentir y no hay cast sin validacion.
-    const rows: Row[] = raw.map((row) =>
-      row.map((cell) => (cell === null || cell === undefined ? "" : String(cell)))
-    );
+    const rows: Row[] = raw.map(coerceRow);
 
     if (objectKeys) {
-      return rows.map((row) =>
-        objectKeys.reduce<MappedRow>((obj, key, index) => {
-          obj[key] = row[index] ?? "";
-          return obj;
-        }, {})
-      );
+      return mapRows(rows, objectKeys);
     }
 
     return rows;
@@ -116,6 +132,100 @@ async function getRange(
     // A library must not pollute the consumer's stdout/stderr. Instead of
     // logging, enrich the error with a clear, human-readable message and
     // re-throw it so the caller decides how to surface or log it.
+    throw decorateError(error);
+  }
+}
+
+// La Sheets API no publica un tope documentado de rangos por `batchGet` (ver
+// https://developers.google.com/sheets/api/limits: sin límite duro de tamaño de
+// request, recomienda <=2MB de payload; sin mención de un máximo de rangos). Pero
+// `ranges` viaja como parámetro de query repetido en un GET, así que el techo real
+// es el largo de la URL — infraestructuras HTTP intermedias suelen cortar bastante
+// antes de un límite formal. Este default es conservador, no un número oficial de
+// Google: partimos la lista en chunks para no arriesgar un 400 por URI demasiado
+// larga en spreadsheets con muchos rangos.
+const DEFAULT_RANGES_PER_CHUNK = 100;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
+ * Fetches multiple ranges from the same spreadsheet in as few HTTP calls as
+ * possible, via the Sheets API `spreadsheets.values.batchGet` endpoint — the
+ * documented endpoint for reading several ranges without one request per range
+ * (https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchGet).
+ * The response preserves request order (documented), so `result[i]` corresponds
+ * to `ranges[i]`.
+ *
+ * `rangesPerChunk` (default {@link DEFAULT_RANGES_PER_CHUNK}) caps how many
+ * ranges go into a single underlying `batchGet` call; longer lists are split
+ * into sequential calls (see the constant's comment for why).
+ */
+function getRanges(
+  auth: SheetsAuth,
+  spreadsheetId: string,
+  ranges: string[],
+  objectKeys?: undefined,
+  timeoutMs?: number,
+  rangesPerChunk?: number
+): Promise<Row[][]>;
+function getRanges(
+  auth: SheetsAuth,
+  spreadsheetId: string,
+  ranges: string[],
+  objectKeys: string[],
+  timeoutMs?: number,
+  rangesPerChunk?: number
+): Promise<MappedRow[][]>;
+async function getRanges(
+  auth: SheetsAuth,
+  spreadsheetId: string,
+  ranges: string[],
+  objectKeys?: string[],
+  timeoutMs?: number,
+  rangesPerChunk?: number
+): Promise<Row[][] | MappedRow[][]> {
+  if (ranges.length === 0) {
+    throw new TypeError("ranges must be a non-empty array.");
+  }
+  // Mismo guard que getRange: `objectKeys = []` es truthy y produciría `{}` por
+  // fila, descartando los datos en silencio.
+  if (objectKeys && objectKeys.length === 0) {
+    throw new TypeError(
+      "objectKeys must be a non-empty array; omit it to get raw rows."
+    );
+  }
+  try {
+    const sheets = google.sheets({ version: "v4", auth });
+    const chunks = chunk(ranges, rangesPerChunk ?? DEFAULT_RANGES_PER_CHUNK);
+
+    const rowsPerRange: Row[][] = [];
+    for (const rangesChunk of chunks) {
+      const res = await sheets.spreadsheets.values.batchGet(
+        { spreadsheetId, ranges: rangesChunk },
+        { timeout: timeoutMs ?? DEFAULT_TIMEOUT_MS, agent: keepAliveAgent }
+      );
+
+      const valueRanges = res.data.valueRanges ?? [];
+      for (const valueRange of valueRanges) {
+        const raw = valueRange.values;
+        // Mismo criterio que getRange: un rango vacío es un resultado normal
+        // ([]), no un error.
+        rowsPerRange.push(!raw || raw.length === 0 ? [] : raw.map(coerceRow));
+      }
+    }
+
+    if (objectKeys) {
+      return rowsPerRange.map((rows) => mapRows(rows, objectKeys));
+    }
+
+    return rowsPerRange;
+  } catch (error) {
     throw decorateError(error);
   }
 }
@@ -174,7 +284,12 @@ function decorateError(error: unknown): Error {
 }
 
 export default getRange;
+export { getRanges };
 
 // The whole module IS the function for CommonJS consumers (and for index.ts's
 // runtime require); the `export default` above only adds the typed ES entry.
 module.exports = getRange;
+// `getRanges` va como propiedad del mismo objeto: la línea de arriba reemplaza
+// `module.exports` entero, así que el named export de TS no sobrevive por sí solo
+// para consumidores CJS (y para el `require` que usa index.spec.ts en tests).
+module.exports.getRanges = getRanges;

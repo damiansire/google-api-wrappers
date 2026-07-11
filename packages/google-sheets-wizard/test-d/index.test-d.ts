@@ -20,6 +20,13 @@ expectAssignable<SheetsAuth>("my-token");
 expectType<Promise<Row[]>>(wizard.getRange("A1:B2"));
 expectType<Promise<MappedRow[]>>(wizard.getRange("A1:B2", ["id", "name"]));
 
+// getRanges: mismo patrón de overloads, un nivel de array extra (uno por rango
+// pedido). result[i] corresponde a ranges[i].
+expectType<Promise<Row[][]>>(wizard.getRanges(["A1:B2", "D1:D2"]));
+expectType<Promise<MappedRow[][]>>(
+  wizard.getRanges(["A1:B2"], ["id", "name"])
+);
+
 // Public instance fields are typed (no `any`).
 expectType<string>(wizard.spreadsheetId);
 expectType<SheetsAuth>(wizard.auth);

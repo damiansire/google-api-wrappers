@@ -1,4 +1,4 @@
-import getRange from "./libs/getRange";
+import getRange, { getRanges } from "./libs/getRange";
 import type { Row, MappedRow, SheetsAuth } from "./libs/getRange";
 
 // SheetsAuth se define en ./libs/getRange (donde se usa) para evitar un ciclo de
@@ -77,6 +77,38 @@ class GoogleSheetsWizard {
     return objectKeys
       ? getRange(this.auth, this.spreadsheetId, range, objectKeys, this.timeoutMs)
       : getRange(this.auth, this.spreadsheetId, range, undefined, this.timeoutMs);
+  }
+
+  /**
+   * Fetches multiple ranges from the sheet in as few HTTP calls as possible
+   * (Sheets API `spreadsheets.values.batchGet`), instead of one `getRange`
+   * call per range. Useful when a screen/report needs several disjoint
+   * ranges from the same spreadsheet at once.
+   *
+   * The result preserves request order: `result[i]` corresponds to `ranges[i]`.
+   * Each entry follows the same empty-range-is-`[]` and mapping rules as
+   * {@link GoogleSheetsWizard.getRange}.
+   *
+   * @param ranges The ranges to fetch (e.g., `["Sheet1!A1:B2", "Sheet1!D:D"]`).
+   * @param objectKeys Optional keys to map every row of every range into an
+   *   object, same as `getRange`.
+   * @example
+   * ```ts
+   * const [people, totals] = await wizard.getRanges([
+   *   "Sheet1!A1:B2",
+   *   "Sheet1!D1:D2",
+   * ]);
+   * ```
+   */
+  getRanges(ranges: string[]): Promise<Row[][]>;
+  getRanges(ranges: string[], objectKeys: string[]): Promise<MappedRow[][]>;
+  getRanges(
+    ranges: string[],
+    objectKeys?: string[]
+  ): Promise<Row[][] | MappedRow[][]> {
+    return objectKeys
+      ? getRanges(this.auth, this.spreadsheetId, ranges, objectKeys, this.timeoutMs)
+      : getRanges(this.auth, this.spreadsheetId, ranges, undefined, this.timeoutMs);
   }
 }
 
