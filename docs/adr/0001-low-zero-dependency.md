@@ -35,7 +35,10 @@ Se implementan wrappers propios sobre `fetch` en vez de adoptar el SDK oficial
   o un formato de respuesta, hay que actualizar el wrapper a mano — el SDK
   oficial lo haría por vos. Mitigado en parte por los tests de integración
   (gaw-2 ya cubre reintentos/backoff ante 429/5xx en `youtube-fast-api`).
-  Paginación/batching de Sheets API todavía no está cubierta (gaw-3, pendiente).
+  Batching de LECTURA en Sheets API ya está cubierto (gaw-3: `getRanges` usa
+  `spreadsheets.values.batchGet`). Queda pendiente para una iteración futura el
+  batching de ESCRITURA (`spreadsheets.values.batchUpdate`), no cubierto por
+  esta primera pasada.
 - **Sin soporte OAuth2 completo del SDK oficial**: si en el futuro se necesita
   un flujo de auth más complejo que API key/token simple, esto puede quedar
   corto y ser motivo real para reconsiderar `googleapis`.

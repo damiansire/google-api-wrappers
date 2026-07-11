@@ -172,6 +172,34 @@ const dataAsObjects = await sheetsWizard.getRange("A1:D3", [
 ];
 ```
 
+### Fetching multiple ranges at once (`getRanges`)
+
+If you need several ranges from the same spreadsheet, `getRanges` fetches all of
+them via the Sheets API `batchGet` endpoint instead of one HTTP call per range:
+
+```javascript
+const [people, totals] = await sheetsWizard.getRanges([
+  "Sheet1!A1:B2",
+  "Sheet1!D1:D2",
+]);
+```
+
+`result[i]` corresponds to `ranges[i]` (the Sheets API preserves request order).
+Each entry follows the same rules as `getRange`: an empty range resolves to `[]`,
+and `objectKeys` maps every range's rows to objects.
+
+```javascript
+const [people, locations] = await sheetsWizard.getRanges(
+  ["Sheet1!A1:B2", "Sheet1!C1:D2"],
+  ["first", "last"]
+);
+```
+
+> Google doesn't publish a hard cap on the number of ranges per `batchGet` call.
+> Since ranges travel as query-string parameters on a GET request, very long
+> lists are chunked internally (100 ranges per underlying call by default) to
+> stay safely under typical URL-length limits.
+
 ## Api Reference
 
 ### `new GoogleSheetsWizard(auth, spreadsheetId)`
@@ -187,6 +215,14 @@ Fetches data from a specific range.
 
 - `range`: The cell range to fetch (e.g., "A1:B5").
 - `objectKeys` (optional): An array of property names to convert rows into objects.
+
+### `getRanges(ranges, objectKeys?)`
+
+Fetches multiple ranges in as few HTTP calls as possible (`spreadsheets.values.batchGet`).
+
+- `ranges`: An array of cell ranges to fetch (e.g., `["A1:B5", "D1:D5"]`).
+- `objectKeys` (optional): Same as `getRange`, applied to every range.
+- Returns an array with one entry per requested range, in the same order.
 
 ## Contributing
 
