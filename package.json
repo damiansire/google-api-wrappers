@@ -1,6 +1,7 @@
 {
   "name": "google-api-wrappers",
   "private": true,
+  "packageManager": "npm@11.13.0",
   "description": "Lightweight Node.js wrappers for Google APIs — YouTube Data API and Google Sheets — each published to npm under its own name.",
   "workspaces": [
     "packages/*"
