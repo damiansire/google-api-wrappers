@@ -44,8 +44,16 @@ jobs:
 
       - name: No circular imports
         run: npm run lint:circular
-        # (knip/sherif quedan fuera: sus binarios nativos están bloqueados por AppLocker
-        # en el entorno de dev; la consistencia de versiones se chequea en el review.)
+
+      - name: Monorepo consistency (sherif)
+        run: npx sherif
+
+      - name: Dead code (knip)
+        # No bloqueante todavia: knip reporta exports internos (videoAdapter.js,
+        # commentsDao.js, videosDao.js) que podrian ser API publica no re-exportada
+        # limpiamente en un package CJS, no dead code confirmado - necesita
+        # triage manual antes de promoverlo a bloqueante. Ver output en logs.
+        run: npx knip || true
 
   bundle-size:
     runs-on: ubuntu-latest
