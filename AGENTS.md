@@ -30,7 +30,7 @@ npm run changeset          # registrar un cambio para el próximo release
 
 **Puerta local completa** antes de dar algo por terminado: `bash verify.sh`
 (corre lint → build → test → test:types → check:pack → lint:circular). CI corre lo mismo
-en Node **18/20/22**.
+en Node **20/22** (18 salió del matrix por EOL).
 
 ## Reglas para agentes (duras)
 

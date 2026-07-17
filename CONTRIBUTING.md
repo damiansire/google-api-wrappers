@@ -11,7 +11,7 @@ npm ci        # instala deps de todos los workspaces
 
 ## Gates (lo que corre CI, y lo que se espera en verde antes de mergear)
 
-CI corre en Node 18/20/22:
+CI corre en Node 20/22 (18 salió del matrix por EOL):
 
 ```bash
 npm run lint          # eslint en cada paquete

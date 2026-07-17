@@ -14,7 +14,7 @@ Small, **typed**, low-dependency Node.js wrappers for Google APIs — each one h
 
 ## Why these wrappers
 
-- **Low / zero dependency.** `youtube-fast-api` pulls in *nothing* at runtime; `google-sheets-wizard` only expects `googleapis` as a peer. No transitive surprise in your `node_modules`.
+- **Low / zero dependency** ([ADR](docs/adr/0001-low-zero-dependency.md)). `youtube-fast-api` pulls in *nothing* at runtime; `google-sheets-wizard` only expects `googleapis` as a peer. No transitive surprise in your `node_modules`.
 - **Typed, and verified typed.** Each package ships `.d.ts` and CI checks them against `node10`, `node16` (CJS + ESM) and bundlers with [`arethetypeswrong`](https://github.com/arethetypeswrong/arethetypeswrong.github.io) + [`publint`](https://publint.dev/) on the real tarball — so the types resolve for *your* setup, not just the author's.
 - **Tested behavior, not just happy paths.** The tricky real-world cases — quota exhaustion, rate-limit retry, pagination of two resources at once — are covered by `node --test` / Jest suites.
 - **Quality-gated on every PR.** CI runs lint, tests, type-tests, package checks ([`publint`](https://publint.dev/) + [`arethetypeswrong`](https://github.com/arethetypeswrong/arethetypeswrong.github.io) on the real tarball), circular-import checks ([`dpdm`](https://github.com/acrazing/dpdm)), a bundle-size budget ([`size-limit`](https://github.com/ai/size-limit)), and monorepo consistency ([`sherif`](https://github.com/QuiiBz/sherif), blocking). Dead-code ([`knip`](https://knip.dev/)) also runs in CI but is **not yet blocking**: it currently reports some internal exports that look unused to static analysis but may be part of the intended public surface of a CJS package — pending manual triage before promoting it to a hard gate.
@@ -53,7 +53,7 @@ npm run test:types     # type-tests (tsd) across workspaces
 npm run lint           # eslint across workspaces
 ```
 
-Releases are automated with [Changesets](https://github.com/changesets/changesets): a changeset per user-facing change, and `release.yml` publishes the affected packages to npm and tags them. Add one with `npm run changeset`.
+Releases are automated with [Changesets](https://github.com/changesets/changesets): a changeset per user-facing change, and `release.yml` publishes the affected packages to npm and tags them. Add one with `npm run changeset`. Current registry-vs-local version drift and the pending "Version Packages" PR: [`docs/release-status.md`](docs/release-status.md).
 
 ## License
 
