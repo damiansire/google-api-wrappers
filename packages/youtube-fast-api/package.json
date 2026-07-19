@@ -1,6 +1,6 @@
 {
   "name": "youtube-fast-api",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A youtube api for easier data management",
   "main": "index.js",
   "types": "index.d.ts",
