@@ -30,7 +30,8 @@ npm run changeset          # registrar un cambio para el próximo release
 
 **Puerta local completa** antes de dar algo por terminado: `bash verify.sh`
 (corre lint → build → test → test:types → check:pack → lint:circular). CI corre lo mismo
-en Node **20/22** (18 salió del matrix por EOL).
+en Node **20/22** (18 salió del matrix por EOL) y suma sherif, knip y el presupuesto de
+tamaño (ver [Entorno](#entorno)).
 
 ## Reglas para agentes (duras)
 
@@ -73,5 +74,13 @@ pase:
 
 ## Entorno
 
-Windows/PowerShell primario. Algunos linters de binario nativo (knip, sherif) están
-bloqueados por AppLocker en dev; el gate usa herramientas JS puras (dpdm, publint, attw).
+Desarrollo primario en Windows/PowerShell; CI corre en `ubuntu-latest`. Además de la
+puerta local (`verify.sh`), el workflow de CI ejecuta:
+
+- `npx sherif`: consistencia del monorepo (versiones de dependencias y `package.json` entre
+  workspaces). Bloqueante.
+- `npx knip`: detección de código muerto. Informativo por ahora (`|| true`): reporta
+  exports internos que podrían ser API pública, y requiere triage antes de bloquear.
+- `npm run size`: presupuesto de tamaño (size-limit), en un job aparte.
+
+`sherif` y `knip` son devDependencies del repo y corren igual en local tras `npm ci`.
